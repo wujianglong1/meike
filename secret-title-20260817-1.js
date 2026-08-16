@@ -1,0 +1,1 @@
+(() => {const header=document.querySelector('main>header');document.querySelector('.nav[data-view="secret"]')?.addEventListener('click',()=>header.classList.add('secret-header'));document.querySelectorAll('.nav:not([data-view="secret"])').forEach(nav=>nav.addEventListener('click',()=>header.classList.remove('secret-header')));})();

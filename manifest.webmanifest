@@ -1,0 +1,14 @@
+{
+  "name": "美刻 · 日常计划与生活记录",
+  "short_name": "美刻",
+  "description": "计划今天与明天，记录方向、习惯、天气和生活。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#eef3fb",
+  "theme_color": "#7f9dc9",
+  "icons": [
+    { "src": "daymark-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

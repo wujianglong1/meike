@@ -1,0 +1,9 @@
+(() => {
+  const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const tomorrow=()=>{let d=new Date();d.setDate(d.getDate()+1);return d};
+  function renderTomorrow(){let date=tomorrow(),k=iso(date),day=S.days[k]||(S.days[k]=fresh()),list=day.todayList||(day.todayList=[]),box=document.getElementById('nextList');document.getElementById('todayPlanDate').textContent=`· ${new Date().getMonth()+1}月${new Date().getDate()}日`;document.getElementById('tomorrowPlanDate').textContent=`· ${date.getMonth()+1}月${date.getDate()}日`;box.innerHTML='';list.forEach((item,i)=>{let row=document.createElement('div');row.className='task tomorrow-task';let check=document.createElement('input');check.type='checkbox';check.checked=!!item.checked;let text=document.createElement('input');text.type='text';text.placeholder='写下明天要做的事';text.value=item.text||'';let remove=document.createElement('button');remove.type='button';remove.textContent='×';check.onchange=()=>{item.checked=check.checked;save()};text.oninput=()=>{item.text=text.value;change()};remove.onclick=()=>{list.splice(i,1);save();renderTomorrow()};row.append(check,text,remove);box.append(row)});}
+  const originalToday=today;today=function(){active=key();originalToday();renderTomorrow()};
+  const add=document.querySelector('[data-section="tomorrow-tasks"] .add');add?.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();let d=tomorrow(),k=iso(d),day=S.days[k]||(S.days[k]=fresh());(day.todayList||(day.todayList=[])).push({text:'',checked:false});save();renderTomorrow();setTimeout(()=>document.querySelector('#nextList input[type=text]:last-of-type')?.focus(),0)},true);
+  document.querySelector('.nav[data-view="today"]')?.addEventListener('click',()=>setTimeout(today,0));
+  today();
+})();

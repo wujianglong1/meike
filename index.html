@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#7f9dc9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="daymark-icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#f4f1ea">
+<title>美刻｜日常计划与生活记录</title>
+<link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="daymark-styles-20260817-78.css">
+</head>
+<body>
+<div class="app">
+<aside id="sidebar">
+<button id="accountSidebar" class="account-sidebar account-sidebar-top" type="button"><span id="accountAvatar" class="account-avatar">美</span><span><b id="accountName">美刻账户</b><small id="accountState">登录后同步数据</small></span></button>
+<nav>
+<button class="nav active" data-view="today">◉　今日</button>
+<button class="nav" data-view="goals">◎　方向</button>
+<button class="nav" data-view="life">▧　生活</button>
+<button class="nav" data-view="secret">⌁　秘密簿</button>
+<button class="nav" data-view="links">↗　网址簿</button>
+<button class="nav" data-view="history">▦　足迹</button>
+<button class="nav" data-view="styles">✦　外观</button>
+</nav>
+<div class="sidefoot">
+<div class="streak">
+<span id="streak">0</span>
+<small>连续记录天数</small>
+</div>
+<button id="export">导出备份</button>
+<label>导入备份<input id="import" type="file" accept="application/json">
+</label>
+</div>
+</aside>
+<main>
+<header>
+<button id="menu" aria-label="菜单">☰</button>
+<div>
+<p class="live-datetime"><span id="date"></span><span class="time-separator">·</span><span id="clock">00:00:00</span></p>
+<h1 id="title">今天，过得怎么样？</h1>
+</div>
+<div class="header-tools"><button id="moduleManager" class="module-manager-button" type="button">模块</button><div class="page-zoom"><span>页面</span><input id="pageZoom" type="range" min="60" max="110" step="1" value="85" aria-label="调整页面大小"><output id="zoomValue">85%</output><button id="zoomReset" type="button" title="根据窗口自动调整">自适应</button></div><button id="theme" aria-label="快速切换配色" title="快速切换配色">✦</button></div>
+</header>
+<section id="today" class="view active">
+<div id="modulePanel" class="module-panel card"><div><strong>今日页模块</strong><small>取消勾选即可隐藏，模块右上角可单独折叠</small></div><div id="moduleChoices" class="module-choices"></div><button id="showAllModules" type="button">全部显示</button></div>
+<div class="habit-panel card" data-section="habits">
+<div class="habit-panel-title">
+<div>
+<em>今日习惯</em>
+<h2>给日常一点稳定感</h2>
+</div>
+<div class="heading-actions"><span class="section-count">已完成 <b id="overviewHabits">0 / 5</b></span><button type="button" id="openHabitComposer" class="add habit-add">＋ 自定义习惯</button></div>
+</div>
+<div id="habitComposer" class="habit-composer">
+<input id="habitName" type="text" maxlength="20" placeholder="例如：早起、背单词、拉伸">
+<button type="button" id="confirmHabitAdd" class="habit-confirm">添加</button>
+<button type="button" id="cancelHabitAdd" class="habit-cancel">取消</button>
+</div>
+<div id="habits" class="habits">
+<label class="habit"><input type="checkbox" data-habit="睡眠达标"><span>睡眠达标</span><button type="button" class="habit-remove always" onclick="event.preventDefault();quickDeleteHabit('睡眠达标',this)" title="删除">×</button></label>
+<label class="habit"><input type="checkbox" data-habit="运动"><span>运动</span><button type="button" class="habit-remove always" onclick="event.preventDefault();quickDeleteHabit('运动',this)" title="删除">×</button></label>
+<label class="habit"><input type="checkbox" data-habit="阅读学习"><span>阅读学习</span><button type="button" class="habit-remove always" onclick="event.preventDefault();quickDeleteHabit('阅读学习',this)" title="删除">×</button></label>
+<label class="habit"><input type="checkbox" data-habit="喝水"><span>喝水</span><button type="button" class="habit-remove always" onclick="event.preventDefault();quickDeleteHabit('喝水',this)" title="删除">×</button></label>
+<label class="habit"><input type="checkbox" data-habit="整理环境"><span>整理环境</span><button type="button" class="habit-remove always" onclick="event.preventDefault();quickDeleteHabit('整理环境',this)" title="删除">×</button></label>
+</div>
+<div class="metrics habit-metrics">
+<label>睡眠<input id="sleep" type="number" step=".5" min="0" placeholder="7.5"><small>小时</small></label>
+<label>运动<input id="exercise" type="number" min="0" placeholder="30"><small>分钟</small></label>
+<label>专注<input id="focus" type="number" step=".5" min="0" placeholder="3"><small>小时</small></label>
+</div>
+</div>
+<div class="card status" data-section="mood-energy">
+<div class="mood-section">
+<span class="label">今日心情</span>
+<div id="mood">
+<button type="button" data-v="晴朗" onclick="chooseMood('晴朗',this)">
+<i>☀️</i>晴朗</button>
+<button type="button" data-v="开心" onclick="chooseMood('开心',this)">
+<i>😊</i>开心</button>
+<button type="button" data-v="平静" onclick="chooseMood('平静',this)">
+<i>😌</i>平静</button>
+<button type="button" data-v="专注" onclick="chooseMood('专注',this)">
+<i>🎯</i>专注</button>
+<button type="button" data-v="一般" onclick="chooseMood('一般',this)">
+<i>🙂</i>一般</button>
+<button type="button" data-v="疲惫" onclick="chooseMood('疲惫',this)">
+<i>😴</i>疲惫</button>
+<button type="button" data-v="焦虑" onclick="chooseMood('焦虑',this)">
+<i>😟</i>焦虑</button>
+<button type="button" data-v="烦躁" onclick="chooseMood('烦躁',this)">
+<i>😣</i>烦躁</button>
+<button type="button" data-v="低落" onclick="chooseMood('低落',this)">
+<i>🌧️</i>低落</button>
+</div>
+</div>
+<label class="energy">
+<span class="label">精力 <b id="energyNum">7</b>/10</span>
+<input id="energy" type="range" min="1" max="10">
+</label>
+</div>
+<section class="card weather-card" data-section="weather">
+<div class="weather-head">
+<div><em>一周天气</em><h2 id="weatherTitle">天气预报</h2><p id="weatherStatus">正在获取当前位置……</p></div>
+<div class="weather-actions"><div class="weather-search"><input id="weatherCity" type="text" placeholder="输入城市"><button id="weatherSearch" type="button">查询</button></div><button id="weatherLocate" type="button">⌖ 定位</button><button id="weatherRefresh" type="button" aria-label="刷新天气">↻</button></div>
+</div>
+<div id="weatherCurrent" class="weather-current"></div>
+<div id="weatherWeek" class="weather-week"><div class="weather-empty">允许定位，或输入城市查询未来七天天气。</div></div>
+<div id="weatherHourly" class="weather-hourly"></div>
+<p class="weather-privacy">位置仅用于查询天气，坐标只保存在当前浏览器中。</p>
+</section>
+<article class="card" data-section="today-tasks">
+<div class="heading">
+<div>
+<em>今日行动 <span id="todayPlanDate"></span></em>
+<h2>今天要做什么</h2>
+</div>
+<div class="heading-actions"><span class="section-count">完成 <b id="overviewTasks">0 / 0</b></span><button class="add" data-list="todayList">＋ 添加</button></div>
+</div>
+<div id="todayList" class="tasks">
+</div>
+</article>
+<article class="card day-schedule" data-section="schedule">
+<div class="heading">
+<div>
+<em>24 小时</em>
+<h2>今天的时间表</h2>
+</div>
+</div>
+<div id="timeSchedule" class="time-schedule"></div>
+</article>
+<div class="grid">
+<article class="card" data-section="review">
+<div class="heading">
+<div>
+<em>今日复盘</em>
+<h2>完成与调整</h2>
+</div>
+<button class="add" data-list="doneList">＋ 添加</button>
+</div>
+<div id="doneList" class="tasks">
+</div>
+<textarea id="reflection" rows="3" placeholder="写下今天最有价值的进展、学到的事，以及明天要调整什么……">
+</textarea>
+</article>
+<article class="card tomorrow-card" data-section="tomorrow-tasks">
+<div class="heading">
+<div>
+<em>明日计划 <span id="tomorrowPlanDate"></span></em>
+<h2>明天要做的事</h2>
+</div>
+<button class="add" data-list="nextList">＋ 添加</button>
+</div>
+<div id="nextList" class="tasks">
+</div>
+<textarea id="obstacle" rows="3" placeholder="最可能遇到的障碍，以及你的应对方式……">
+</textarea>
+</article>
+</div>
+<div class="save">
+<span id="saved">已自动保存</span>
+<button id="finish">完成今日记录</button>
+</div>
+</section>
+<section id="goals" class="view">
+<p class="intro">方向不必很多，足够清楚就好。</p>
+<div class="grid">
+<article class="card goal year">
+<em>这一年</em>
+<h2>真正重要的目标</h2>
+<div id="yearGoals">
+</div>
+</article>
+<article class="card goal">
+<em>这个月</em>
+<h2>希望交付的成果</h2>
+<div id="monthGoals">
+</div>
+<label class="not">本月明确不做<textarea id="notDoing" rows="3" placeholder="为重要的事留出空间……">
+</textarea>
+</label>
+</article>
+</div>
+</section>
+<section id="calendar" class="view">
+<div class="calendar-toolbar">
+<div>
+<p class="intro">点击日期，查看、补记或提前安排。</p>
+<h2 id="calendarMonth">
+</h2>
+</div>
+<div class="calendar-actions">
+<button id="calendarToday">回到本月</button>
+<button id="calendarPrev" aria-label="上个月">←</button>
+<button id="calendarNext" aria-label="下个月">→</button>
+</div>
+</div>
+<div class="calendar-card card">
+<div class="weekdays">
+<span>日</span>
+<span>一</span>
+<span>二</span>
+<span>三</span>
+<span>四</span>
+<span>五</span>
+<span>六</span>
+</div>
+<div id="calendarGrid" class="calendar-grid">
+</div>
+<div class="calendar-legend">
+<span>
+<i class="dot planned">
+</i>有事项</span>
+<span>
+<i class="dot complete">
+</i>已完成记录</span>
+<span><i class="dot life-dot"></i>生活记录</span>
+<span><i class="dot special-dot"></i>特殊事件</span>
+</div>
+<div id="calendarEditor" class="calendar-editor">
+<div class="editor-head">
+<div>
+<em>日期事项</em>
+<h3 id="editorDate">
+</h3>
+</div>
+<div>
+<button id="openSelectedDay">打开该日计划</button>
+<button id="toggleCalendarSpecial" type="button" title="标记特殊事件">☆</button>
+<button id="closeEditor" aria-label="关闭">×</button>
+</div>
+</div>
+<div id="calendarEditorList" class="editor-list">
+</div>
+<button id="addCalendarItem" class="add-calendar-item">＋ 添加事项</button>
+</div>
+</div>
+</section>
+<section id="secret" class="view"><div class="secret-head"><div><p class="intro">只留给自己的几句话。</p><h2>秘密簿</h2></div><button id="newSecret" type="button">＋ 新记录</button></div><div id="secretEditor" class="secret-editor card"><input id="secretTitle" type="text" maxlength="80" placeholder="这一页的标题"><textarea id="secretText" rows="9" placeholder="写下此刻不想说出口的事……"></textarea><div><time id="secretDate"></time><button id="saveSecret" type="button">保存</button></div></div><div id="secretList" class="secret-list"></div></section>
+<section id="links" class="view"><div class="link-head"><div><p class="intro">把常用入口收在这里。</p><h2>网址簿</h2></div></div><div class="link-editor card"><input id="linkName" type="text" maxlength="60" placeholder="网站名称，例如：学校邮箱"><input id="linkUrl" type="url" placeholder="https://example.com"><button id="saveLink" type="button">添加网址</button></div><div id="linkList" class="link-list"></div></section>
+<section id="life" class="view">
+<div class="life-head">
+<div><p class="intro">留住照片，也留住当时想说的话。</p><h2>生活记录</h2></div>
+<button id="newLifeEntry" type="button" class="life-new">＋ 新记录</button>
+</div>
+<div class="life-filter"><input id="lifeSearch" type="search" placeholder="搜索标题、文字或标签"><select id="lifeSort" aria-label="生活记录排序"><option value="newest">日期从新到旧</option><option value="oldest">日期从旧到新</option><option value="updated">最近编辑</option></select></div>
+<div class="life-storage card"><div><span>本地图片空间</span><strong id="lifeStorageValue">正在计算……</strong></div><div class="life-storage-track"><i id="lifeStorageBar"></i></div><small id="lifeBackupStatus">尚未进行完整备份</small></div>
+<article id="lifeComposer" class="card life-composer">
+<div class="life-form-row"><label>日期<input id="lifeDate" type="date"></label><label>标题<input id="lifeTitle" maxlength="50" placeholder="给这段生活起个名字"></label></div>
+<label class="life-tag-label">标签<input id="lifeTags" maxlength="100" placeholder="例如：旅行、家人、美食（用逗号分隔）"></label>
+<label class="life-note-label">文字标注<textarea id="lifeNote" rows="5" placeholder="发生了什么、当时有什么感受……"></textarea></label>
+<label class="life-upload"><input id="lifeImages" type="file" accept="image/*" multiple><span>＋ 添加图片</span><small>支持一次选择多张</small></label>
+<div id="lifePreview" class="life-preview"></div>
+<div class="life-form-actions"><button id="cancelLifeEntry" type="button">取消</button><button id="saveLifeEntry" type="button">保存记录</button></div>
+</article>
+<div id="lifeEntries" class="life-entries"></div>
+</section>
+<section id="history" class="view">
+<div class="historyhead">
+<p>每一次认真回望，都留下了一点轨迹。</p>
+<input id="search" placeholder="搜索记录">
+</div>
+<div id="records">
+</div>
+</section>
+<section id="styles" class="view">
+<p class="intro">选择一份轻柔的马卡龙心情，让每天打开页面都舒服一点。</p>
+<div id="styleChoices" class="style-grid">
+<button class="style-card" data-theme="light">
+<span class="palette sunlight">
+</span>
+<strong>香草奶油</strong>
+<small>柔暖、干净、松弛</small>
+</button>
+<button class="style-card" data-theme="night">
+<span class="palette night">
+</span>
+<strong>香芋慕斯</strong>
+<small>梦幻、安静、柔和</small>
+</button>
+<button class="style-card" data-theme="sea">
+<span class="palette sea">
+</span>
+<strong>薄荷糖</strong>
+<small>清新、透气、轻盈</small>
+</button>
+<button class="style-card" data-theme="forest">
+<span class="palette forest">
+</span>
+<strong>开心果</strong>
+<small>自然、温柔、有生机</small>
+</button>
+<button class="style-card" data-theme="peach">
+<span class="palette peach">
+</span>
+<strong>蜜桃乳酪</strong>
+<small>甜暖、愉悦、有温度</small>
+</button>
+<button class="style-card" data-theme="ink">
+<span class="palette ink">
+</span>
+<strong>蓝莓牛奶</strong>
+<small>清透、平静、有秩序</small>
+</button>
+</div>
+</section>
+</main>
+</div>
+<div id="toast">
+</div>
+<script>
+window.openHabitBox=function(){var box=document.getElementById('habitComposer'),input=document.getElementById('habitName');box.classList.add('open');setTimeout(function(){input.focus()},60)};
+window.closeHabitBox=function(){document.getElementById('habitComposer').classList.remove('open');document.getElementById('habitName').value=''};
+window.saveHabitFromBox=function(){var input=document.getElementById('habitName'),name=input.value.trim();if(!name){input.focus();return}var key='daymark-v1',data;try{data=JSON.parse(localStorage.getItem(key)||'null')}catch(e){}data=data||{settings:{theme:'light'},goals:{year:['','',''],month:['','',''],notDoing:''},days:{}};data.settings=data.settings||{};var defaults=['睡眠达标','运动','阅读学习','喝水','整理环境'];var names=data.settings.habitNames||defaults.slice();if(names.indexOf(name)>=0){input.select();return}names.push(name);data.settings.habitNames=names;var now=new Date(),dayKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');data.days=data.days||{};data.days[dayKey]=data.days[dayKey]||{};data.days[dayKey].habits=data.days[dayKey].habits||{};data.days[dayKey].habits[name]=false;localStorage.setItem(key,JSON.stringify(data));location.reload()};
+window.quickDeleteHabit=function(name,button){var key='daymark-v1',data;try{data=JSON.parse(localStorage.getItem(key)||'null')}catch(e){}if(data){data.settings=data.settings||{};var defaults=['睡眠达标','运动','阅读学习','喝水','整理环境'];data.settings.habitNames=(data.settings.habitNames||defaults).filter(function(x){return x!==name});Object.keys(data.days||{}).forEach(function(k){if(data.days[k].habits)delete data.days[k].habits[name]});localStorage.setItem(key,JSON.stringify(data))}button.closest('.habit').remove();var total=document.querySelectorAll('#habits .habit').length,done=document.querySelectorAll('#habits input:checked').length;document.getElementById('overviewHabits').textContent=done+' / '+total;document.getElementById('habitProgress').style.width=(total?done/total*100:0)+'%'};
+document.getElementById('habitName').addEventListener('keydown',function(e){if(e.key==='Enter')saveHabitFromBox();if(e.key==='Escape')closeHabitBox()});
+</script>
+<script src="daymark-app-20260817-55.js">
+</script>
+<script src="theme-cycle-20260817-31.js"></script>
+  <script src="weather-forecast-20260817-52.js"></script>
+<script src="zoom-control-20260817-45.js"></script>
+<script src="life-journal-20260817-49.js"></script>
+<script src="module-controls-20260817-50.js"></script>
+<div id="accountDialog" class="account-dialog" aria-hidden="true"><div class="account-panel"><button id="closeAccount" class="account-close" type="button" aria-label="关闭">×</button><em>美刻账户</em><h2 id="accountTitle">登录后，在各设备继续记录</h2><p id="accountHint">使用邮箱和密码保存你的日程、习惯和目标。</p><form id="accountForm"><label>邮箱<input id="accountEmail" type="email" autocomplete="email" required placeholder="name@example.com"></label><label>密码<input id="accountPassword" type="password" autocomplete="current-password" required minlength="6" placeholder="至少 6 位"></label><button id="accountSubmit" type="submit">登录</button></form><button id="accountMode" class="account-mode" type="button">还没有账户？注册</button><div id="accountSigned" hidden><div class="profile-editor"><button id="avatarPicker" type="button" class="profile-avatar">美</button><input id="avatarFile" type="file" accept="image/*" hidden><div><label>昵称<input id="profileName" maxlength="18" placeholder="给自己起个名字"></label><button id="saveProfile" type="button">保存资料</button></div></div><strong id="accountUser"></strong><p>同步已开启，修改会自动保存到你的账户。</p><button id="syncNow" type="button">立即同步</button><button id="accountSignOut" class="account-mode" type="button">退出登录</button></div><p id="accountMessage" class="account-message" role="status"></p></div></div>
+<script src="daymark-account-20260817-2.js"></script>
+<script src="goals-planning-20260817-1.js"></script>
+<script src="calendar-day-link-20260817-3.js"></script>
+<script src="time-schedule-20260817-1.js"></script>
+<script src="secret-book-20260817-1.js"></script>
+<script src="secret-lock-20260817-1.js"></script>
+<script src="secret-title-20260817-1.js"></script>
+<script src="link-book-20260817-1.js"></script>
+<script src="link-title-20260817-1.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
