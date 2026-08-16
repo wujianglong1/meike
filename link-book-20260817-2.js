@@ -1,0 +1,11 @@
+(() => {
+  const K='meike-link-book',$=id=>document.getElementById(id);
+  let editingId=null;
+  const read=()=>{try{return JSON.parse(localStorage.getItem(K)||'[]')}catch{return[]}};
+  const write=items=>{localStorage.setItem(K,JSON.stringify(items));window.dispatchEvent(new Event('meike-local-data-changed'))};
+  function reset(){editingId=null;$('linkName').value='';$('linkUrl').value='';$('saveLink').textContent='添加网址'}
+  function render(){let box=$('linkList');box.innerHTML='';read().forEach((item,index)=>{let row=document.createElement('article');row.className='link-item card';let open=document.createElement('a');open.href=item.url;open.target='_blank';open.rel='noopener';open.textContent=item.name;let url=document.createElement('small');url.textContent=item.url;let actions=document.createElement('div');actions.className='link-actions';let edit=document.createElement('button');edit.type='button';edit.textContent='编辑';edit.title='编辑网址';edit.onclick=()=>{editingId=item.id||String(index);$('linkName').value=item.name||'';$('linkUrl').value=item.url||'';$('saveLink').textContent='保存修改';$('linkName').focus()};let remove=document.createElement('button');remove.type='button';remove.textContent='×';remove.title='删除';remove.onclick=()=>{if(!confirm(`删除网址「${item.name||item.url}」？`))return;let items=read();items.splice(index,1);write(items);if(editingId===(item.id||String(index)))reset();render()};actions.append(edit,remove);row.append(open,url,actions);box.append(row)})}
+  $('saveLink').onclick=()=>{let name=$('linkName').value.trim(),url=$('linkUrl').value.trim();if(!url)return $('linkUrl').focus();if(!/^https?:\/\//i.test(url))url='https://'+url;try{new URL(url)}catch{return $('linkUrl').focus()}let items=read(),existing=items.findIndex((item,index)=>(item.id||String(index))===editingId),item={id:existing>=0?items[existing].id||String(existing):`${Date.now()}-${Math.random().toString(36).slice(2,7)}`,name:name||new URL(url).hostname,url};if(existing>=0)items[existing]=item;else items.push(item);write(items);reset();render()};
+  document.querySelector('.nav[data-view="links"]').addEventListener('click',()=>{document.getElementById('title').textContent='常用网址';render()});
+  render();
+})();
