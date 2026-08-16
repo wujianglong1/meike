@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="120" fill="#7f9dc9"/>
+  <rect x="72" y="72" width="368" height="368" rx="92" fill="#f5f8ff" opacity=".96"/>
+  <path d="M153 164h206v38H153zm0 73h206v38H153zm0 73h126v38H153z" fill="#7f9dc9" opacity=".38"/>
+  <path d="M312 332l31 31 64-79" fill="none" stroke="#5f7fae" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="256" y="290" text-anchor="middle" font-size="180" font-family="serif" fill="#3f5574">美</text>
+</svg>

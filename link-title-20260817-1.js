@@ -1,0 +1,1 @@
+(() => {const header=document.querySelector('main>header');document.querySelector('.nav[data-view="links"]')?.addEventListener('click',()=>{header.classList.add('secret-header');document.getElementById('title').textContent=''})})();
