@@ -1,7 +1,7 @@
 (() => {
   const box = document.getElementById('habits');
   if (!box) return;
-  let dragged = null;
+  let dragged = null, dropTarget = null, dropAfter = false;
   const saveOrder = () => {
     try {
       const data = JSON.parse(localStorage.getItem('daymark-v1') || '{}');
@@ -28,11 +28,11 @@
       if (dragged !== item) return;
       const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('.habit');
       if (!target || target === item || target.parentElement !== box) return;
-      const after = event.clientY > target.getBoundingClientRect().top + target.offsetHeight / 2;
-      box.insertBefore(item, after ? target.nextSibling : target);
+      dropTarget = target; dropAfter = event.clientY > target.getBoundingClientRect().top + target.offsetHeight / 2;
+      box.querySelectorAll('.habit').forEach(x => x.classList.remove('drop-target')); target.classList.add('drop-target');
     });
-    item.addEventListener('pointerup', () => { if (dragged !== item) return; item.classList.remove('dragging'); dragged = null; saveOrder(); });
-    item.addEventListener('pointercancel', () => { item.classList.remove('dragging'); dragged = null; });
+    item.addEventListener('pointerup', () => { if (dragged !== item) return; if (dropTarget) box.insertBefore(item, dropAfter ? dropTarget.nextSibling : dropTarget); item.classList.remove('dragging'); box.querySelectorAll('.habit').forEach(x => x.classList.remove('drop-target')); dragged = null; dropTarget = null; saveOrder(); });
+    item.addEventListener('pointercancel', () => { item.classList.remove('dragging'); box.querySelectorAll('.habit').forEach(x => x.classList.remove('drop-target')); dragged = null; dropTarget = null; });
   });
   new MutationObserver(prepare).observe(box, { childList: true });
   prepare();
