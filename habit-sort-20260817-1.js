@@ -17,6 +17,19 @@
     item.addEventListener('dragstart', event => { dragged = item; item.classList.add('dragging'); event.dataTransfer.effectAllowed = 'move'; });
     item.addEventListener('dragend', () => { item.classList.remove('dragging'); dragged = null; box.querySelectorAll('.habit').forEach(x => x.classList.remove('drop-target')); saveOrder(); });
     item.addEventListener('dragover', event => { event.preventDefault(); if (!dragged || dragged === item) return; box.querySelectorAll('.habit').forEach(x => x.classList.remove('drop-target')); item.classList.add('drop-target'); const after = event.clientY > item.getBoundingClientRect().top + item.offsetHeight / 2; box.insertBefore(dragged, after ? item.nextSibling : item); });
+    item.addEventListener('pointerdown', event => {
+      if (event.target.closest('input,button')) return;
+      dragged = item; item.classList.add('dragging'); item.setPointerCapture?.(event.pointerId);
+    });
+    item.addEventListener('pointermove', event => {
+      if (dragged !== item) return;
+      const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('.habit');
+      if (!target || target === item || target.parentElement !== box) return;
+      const after = event.clientY > target.getBoundingClientRect().top + target.offsetHeight / 2;
+      box.insertBefore(item, after ? target.nextSibling : target);
+    });
+    item.addEventListener('pointerup', () => { if (dragged !== item) return; item.classList.remove('dragging'); dragged = null; saveOrder(); });
+    item.addEventListener('pointercancel', () => { item.classList.remove('dragging'); dragged = null; });
   });
   new MutationObserver(prepare).observe(box, { childList: true });
   prepare();
