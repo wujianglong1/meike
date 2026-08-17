@@ -1,0 +1,4 @@
+@import url('daymark-styles-20260817-82.css');
+.time-slot input.schedule-select{width:16px;height:16px;padding:0;margin:0;accent-color:var(--accent);cursor:pointer}
+.merge-hint{font-size:12px;color:var(--muted);white-space:nowrap}
+.heading-actions button:disabled{opacity:.5;cursor:not-allowed}
