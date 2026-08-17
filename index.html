@@ -25,6 +25,7 @@
 <button class="nav" data-view="life">▧　生活</button>
 <button class="nav" data-view="secret">⌁　秘密簿</button>
 <button class="nav" data-view="links">↗　网址簿</button>
+<button class="nav" data-view="bookshelf">▤　书架</button>
 <button class="nav" data-view="history">▦　足迹</button>
 <button class="nav" data-view="styles">✦　外观</button>
 </nav>
@@ -239,6 +240,12 @@
 </section>
 <section id="secret" class="view"><div class="secret-head"><div><p class="intro">只留给自己的几句话。</p><h2>秘密簿</h2></div><button id="newSecret" type="button">＋ 新记录</button></div><div id="secretEditor" class="secret-editor card"><input id="secretTitle" type="text" maxlength="80" placeholder="这一页的标题"><textarea id="secretText" rows="9" placeholder="写下此刻不想说出口的事……"></textarea><div><time id="secretDate"></time><button id="saveSecret" type="button">保存</button></div></div><div id="secretList" class="secret-list"></div></section>
 <section id="links" class="view"><div class="link-head"><div><p class="intro">把常用入口收在这里。</p><h2>网址簿</h2></div></div><div class="link-editor card"><input id="linkName" type="text" maxlength="60" placeholder="网站名称，例如：学校邮箱"><input id="linkUrl" type="url" placeholder="https://example.com"><button id="saveLink" type="button">添加网址</button></div><div id="linkList" class="link-list"></div></section>
+<section id="bookshelf" class="view">
+<div class="bookshelf-head"><div><p class="intro">把想读的书放在手边。</p><h2>我的书架</h2></div></div>
+<article class="card wisdom-card"><div class="wisdom-head"><div><em>先贤智慧</em><h2 id="wisdomTitle">今日故事</h2></div><button id="wisdomNext" type="button">换一则</button></div><p id="wisdomStory"></p><small id="wisdomSource"></small></article>
+<article class="card bookshelf-editor"><div class="heading"><div><em>加入书架</em><h2>添加一本书</h2></div></div><div class="bookshelf-form"><input id="bookTitle" maxlength="80" placeholder="书名"><input id="bookAuthor" maxlength="50" placeholder="作者（可选）"><input id="bookUrl" type="url" placeholder="在线阅读网址，例如 https://…"><textarea id="bookNote" rows="2" placeholder="想读它的理由（可选）"></textarea><button id="saveBook" type="button">加入书架</button></div></article>
+<div id="bookList" class="book-list"></div>
+</section>
 <section id="life" class="view">
 <div class="life-head">
 <div><p class="intro">留住照片，也留住当时想说的话。</p><h2>生活记录</h2></div>
@@ -394,6 +401,7 @@ document.getElementById('habitName').addEventListener('keydown',function(e){if(e
 <script src="secret-title-20260817-1.js"></script>
 <script src="link-book-20260817-2.js"></script>
 <script src="link-title-20260817-1.js"></script>
+<script src="bookshelf-20260818-1.js"></script>
 </body>
 </html>
 
