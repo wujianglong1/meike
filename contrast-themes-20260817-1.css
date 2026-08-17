@@ -1,0 +1,4 @@
+body[data-theme="cobalt"]{--bg:#e7efff;--card:#ffffff;--ink:#102a56;--muted:#41638f;--line:#a9c4ee;--accent:#1455d9;--soft:#d8e6ff;--green:#087f5b;--yellow:#e09f00;--red:#c92a2a}
+body[data-theme="coral"]{--bg:#fff0e8;--card:#ffffff;--ink:#4d1717;--muted:#8a4540;--line:#f0b2a2;--accent:#d92828;--soft:#ffd8ca;--green:#087f5b;--yellow:#b56600;--red:#a61e4d}
+body[data-theme="violet"]{--bg:#f1eaff;--card:#ffffff;--ink:#2d1559;--muted:#68479a;--line:#cbb5ef;--accent:#7135d8;--soft:#e4d4ff;--green:#087f5b;--yellow:#b56600;--red:#c2255c}
+.palette.cobalt{background:linear-gradient(135deg,#1455d9 0 50%,#e7efff 50%)}.palette.coral{background:linear-gradient(135deg,#d92828 0 50%,#fff0e8 50%)}.palette.violet{background:linear-gradient(135deg,#7135d8 0 50%,#f1eaff 50%)}

@@ -1,12 +1,12 @@
 (() => {
-  const themes = ['light', 'peach', 'sea', 'forest', 'ink', 'night'];
+  const themes = ['light', 'peach', 'sea', 'forest', 'ink', 'night', 'cobalt', 'coral', 'violet'];
   const names = {
     light: '香草奶油',
     peach: '蜜桃乳酪',
     sea: '薄荷糖',
     forest: '开心果',
     ink: '蓝莓牛奶',
-    night: '香芋慕斯'
+    night: '香芋慕斯', cobalt: '钴蓝高对比', coral: '珊瑚高对比', violet: '紫罗兰高对比'
   };
 
   const button = document.querySelector('#theme');
