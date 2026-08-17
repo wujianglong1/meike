@@ -15,3 +15,6 @@
 .sync-state{color:var(--accent);font-weight:600}
 .habit{cursor:grab;touch-action:none}.habit.dragging{opacity:.55}.habit.drop-target{outline:2px dashed var(--accent);outline-offset:3px}
 .habit-drag-placeholder{display:block;flex:0 0 auto;border:0;background:transparent;opacity:1}.habit.dragging{cursor:grabbing;opacity:.92;box-shadow:0 10px 24px color-mix(in srgb,var(--accent) 18%,transparent);transition:none}.habit.drop-target{outline:0}.habit.drop-target span{border-color:color-mix(in srgb,var(--accent) 56%,var(--line));box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 14%,transparent)}
+
+/* Tomorrow tasks have a checkbox, star, text field, and remove button. */
+.tomorrow-card #nextList .tomorrow-task{grid-template-columns:24px 38px minmax(0,1fr) 28px}.tomorrow-card #nextList .tomorrow-task .task-main{min-width:0}.tomorrow-card #nextList .tomorrow-task .task-main>input[type=text]{width:100%;min-width:0}.tomorrow-card #nextList .tomorrow-task .remove-task{grid-column:4;grid-row:1}
