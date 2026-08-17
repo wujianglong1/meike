@@ -9,7 +9,6 @@
       data.settings.habitNames = [...box.querySelectorAll('.habit')].map(item => item.querySelector('span')?.textContent || '').filter(Boolean);
       localStorage.setItem('daymark-v1', JSON.stringify(data));
       window.dispatchEvent(new Event('meike-local-data-changed'));
-      setTimeout(() => location.reload(), 80);
     } catch {}
   };
   const prepare = () => box.querySelectorAll('.habit').forEach(item => {
