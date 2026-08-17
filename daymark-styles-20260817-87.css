@@ -1,0 +1,14 @@
+@import url('daymark-styles-20260817-86.css');
+
+/* A merged range keeps every hour in its original row. Only the row tint changes. */
+.time-slot.is-merged{
+  grid-template-columns:18px 48px minmax(0,1fr) auto;
+  align-items:center;
+  padding:2px 0 7px;
+  border-radius:0;
+}
+.time-slot.is-merged .schedule-select{grid-column:1;grid-row:1}
+.time-slot.is-merged time{grid-column:2;grid-row:1;font-size:13px;justify-self:start}
+.time-slot.is-merged input:not(.schedule-select){grid-column:3;grid-row:1}
+.time-slot.is-merged .schedule-split{grid-column:4;grid-row:1}
+@media(max-width:700px){.time-slot.is-merged{grid-template-columns:18px 52px minmax(0,1fr) auto}}
