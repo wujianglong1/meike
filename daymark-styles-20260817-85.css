@@ -1,0 +1,6 @@
+@import url('daymark-styles-20260817-84.css');
+.time-slot.is-merged{border-bottom-color:transparent;border-radius:6px;background:color-mix(in srgb,var(--merge-color) 18%,transparent)}
+.time-slot.is-merged.merge-color-0{--merge-color:#e7a6a1}.time-slot.is-merged.merge-color-1{--merge-color:#a9c8e8}.time-slot.is-merged.merge-color-2{--merge-color:#b9d9b1}.time-slot.is-merged.merge-color-3{--merge-color:#e3c28d}.time-slot.is-merged.merge-color-4{--merge-color:#c5b3dc}
+.time-slot.is-merged .schedule-split{grid-column:4;grid-row:1}
+.time-slot.is-merged{background:color-mix(in srgb,var(--merge-color) 11%,transparent);border-bottom-color:color-mix(in srgb,var(--merge-color) 12%,transparent);transition:background-color .2s ease,box-shadow .2s ease}
+.time-slot.is-merged.merge-color-0{--merge-color:#e7a6a1}.time-slot.is-merged.merge-color-1{--merge-color:#a9c8e8}.time-slot.is-merged.merge-color-2{--merge-color:#b9d9b1}.time-slot.is-merged.merge-color-3{--merge-color:#e3c28d}.time-slot.is-merged.merge-color-4{--merge-color:#c5b3dc}
