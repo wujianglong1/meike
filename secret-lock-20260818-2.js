@@ -40,7 +40,7 @@
     const lock = document.createElement('div');
     lock.id = 'secretLock';
     lock.className = 'secret-lock card';
-    lock.innerHTML = `<div class="secret-art"><div id="secretArtScene" class="secret-art-scene">${sceneMarkup}</div></div><div id="secretPrompt" class="secret-prompt" hidden><em>私密空间</em><h2>${configured ? '输入密码以打开秘密簿' : '为秘密簿设置密码'}</h2>${configured ? '' : '<div class="secret-art-setup"><label class="secret-art-upload">选择一张插图<input id="secretArtFile" type="file" accept="image/*"></label><div id="secretArtPreview" class="secret-art-preview"><div class="secret-preview-scene"></div><button id="secretPreviewHotspot" type="button" aria-label="设置隐藏入口位置"><span></span></button></div><small>点击预览图设置隐藏入口位置</small></div>'}<input id="secretPassword" name="secret-pass-${Date.now()}" type="password" minlength="4" autocomplete="new-password" readonly placeholder="至少 4 位密码"><input id="secretPasswordConfirm" name="secret-confirm-${Date.now()}" type="password" minlength="4" autocomplete="new-password" readonly placeholder="再次输入密码" ${configured ? 'hidden' : ''}><button type="button" id="unlockSecret">${configured ? '打开秘密簿' : '设置并打开'}</button><p id="secretLockMessage"></p></div>`;
+    lock.innerHTML = `<div class="secret-art"><div id="secretArtScene" class="secret-art-scene">${sceneMarkup}</div></div><div id="secretPrompt" class="secret-prompt" hidden><em>私密空间</em><h2>${configured ? '输入密码以打开秘密簿' : '为秘密簿设置密码'}</h2>${configured && art ? '' : '<div class="secret-art-setup"><label class="secret-art-upload">选择一张插图<input id="secretArtFile" type="file" accept="image/*"></label><div id="secretArtPreview" class="secret-art-preview"><div class="secret-preview-scene"></div><button id="secretPreviewHotspot" type="button" aria-label="设置隐藏入口位置"><span></span></button></div><small>点击预览图设置隐藏入口位置</small></div>'}<input id="secretPassword" name="secret-pass-${Date.now()}" type="password" minlength="4" autocomplete="new-password" readonly placeholder="至少 4 位密码"><input id="secretPasswordConfirm" name="secret-confirm-${Date.now()}" type="password" minlength="4" autocomplete="new-password" readonly placeholder="再次输入密码" ${configured ? 'hidden' : ''}><button type="button" id="unlockSecret">${configured ? '打开秘密簿' : '设置并打开'}</button><p id="secretLockMessage"></p></div>`;
     head.after(lock);
     const scene = lock.querySelector('#secretArtScene');
     scene.innerHTML = sceneMarkup;
@@ -58,7 +58,7 @@
     };
     scene.querySelector('#secretHotspot').onclick = showPrompt;
 
-    if (!configured) {
+    if (!configured || !art) {
       let chosenArt = art;
       let chosenPoint = { ...point };
       const preview = lock.querySelector('#secretArtPreview');
@@ -98,8 +98,10 @@
         const confirmPass = confirmInput?.value || '';
         const message = lock.querySelector('#secretLockMessage');
         if (pass.length < 4) { message.textContent = '密码至少需要 4 位。'; return; }
-        if (pass !== confirmPass) { message.textContent = '两次输入的密码不一致。'; return; }
-        localStorage.setItem(passwordKey, await hash(pass));
+        const value = await hash(pass);
+        if (configured && value !== localStorage.getItem(passwordKey)) { message.textContent = '密码不正确。'; return; }
+        if (!configured && pass !== confirmPass) { message.textContent = '两次输入的密码不一致。'; return; }
+        if (!configured) localStorage.setItem(passwordKey, value);
         if (chosenArt) localStorage.setItem(artKey, chosenArt); else localStorage.removeItem(artKey);
         localStorage.setItem(hotspotKey, JSON.stringify(chosenPoint));
         lock.remove(); editor.hidden = false; list.hidden = false;
