@@ -1,9 +1,89 @@
 (() => {
-  const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  const tomorrow=()=>{let d=new Date();d.setDate(d.getDate()+1);return d};
-  function renderTomorrow(){let date=tomorrow(),k=iso(date),day=S.days[k]||(S.days[k]=fresh()),list=day.todayList||(day.todayList=[]),box=document.getElementById('nextList');document.getElementById('todayPlanDate').textContent=`· ${new Date().getMonth()+1}月${new Date().getDate()}日`;document.getElementById('tomorrowPlanDate').textContent=`· ${date.getMonth()+1}月${date.getDate()}日`;box.innerHTML='';list.forEach((item,i)=>{let row=document.createElement('div');row.className='task tomorrow-task';let check=document.createElement('input');check.type='checkbox';check.checked=!!item.checked;let text=document.createElement('input');text.type='text';text.placeholder='写下明天要做的事';text.value=item.text||'';let remove=document.createElement('button');remove.type='button';remove.textContent='×';check.onchange=()=>{item.checked=check.checked;save()};text.oninput=()=>{item.text=text.value;change()};remove.onclick=()=>{list.splice(i,1);save();renderTomorrow()};row.append(check,text,remove);box.append(row)});}
-  const originalToday=today;today=function(){active=key();originalToday();renderTomorrow()};
-  const add=document.querySelector('[data-section="tomorrow-tasks"] .add');add?.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();let d=tomorrow(),k=iso(d),day=S.days[k]||(S.days[k]=fresh());(day.todayList||(day.todayList=[])).push({text:'',checked:false});save();renderTomorrow();setTimeout(()=>document.querySelector('#nextList input[type=text]:last-of-type')?.focus(),0)},true);
-  document.querySelector('.nav[data-view="today"]')?.addEventListener('click',()=>setTimeout(today,0));
+  const dateKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const dateFromKey = value => new Date(`${value}T12:00:00`);
+  const offsetDate = (value, amount) => {
+    const date = dateFromKey(value);
+    date.setDate(date.getDate() + amount);
+    return date;
+  };
+  const label = date => `· ${date.getMonth() + 1}月${date.getDate()}日`;
+  const isCurrentDay = () => active === key();
+  const ensureDay = value => S.days[value] || (S.days[value] = fresh());
+
+  function paintPlanDates() {
+    const selected = dateFromKey(active);
+    const tomorrow = offsetDate(active, 1);
+    const todayLabel = document.getElementById('todayPlanDate');
+    const tomorrowLabel = document.getElementById('tomorrowPlanDate');
+    if (todayLabel) todayLabel.textContent = label(selected);
+    if (tomorrowLabel) tomorrowLabel.textContent = label(tomorrow);
+  }
+
+  function renderTomorrow() {
+    if (!isCurrentDay()) return;
+    const tomorrowDate = offsetDate(key(), 1);
+    const tomorrowKey = dateKey(tomorrowDate);
+    const day = ensureDay(tomorrowKey);
+    const list = day.todayList || (day.todayList = []);
+    const box = document.getElementById('nextList');
+    if (!box) return;
+    box.innerHTML = '';
+    list.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = `task tomorrow-task${item.starred ? ' is-starred' : ''}`;
+      const check = document.createElement('input');
+      check.type = 'checkbox';
+      check.checked = !!item.checked;
+      const star = document.createElement('button');
+      star.type = 'button';
+      star.className = 'task-star';
+      star.setAttribute('aria-label', item.starred ? '取消重要标记' : '标记为重要');
+      star.textContent = item.starred ? '★' : '☆';
+      const main = document.createElement('div');
+      main.className = 'task-main';
+      const text = document.createElement('input');
+      text.type = 'text';
+      text.placeholder = '写下明天要做的事';
+      text.value = item.text || '';
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'remove-task';
+      remove.setAttribute('aria-label', '删除事项');
+      remove.textContent = '×';
+      check.onchange = () => { item.checked = check.checked; change(); };
+      star.onclick = () => { item.starred = !item.starred; renderTomorrow(); change(); };
+      text.oninput = () => { item.text = text.value; change(); };
+      remove.onclick = () => { list.splice(index, 1); save(); renderTomorrow(); };
+      main.append(text);
+      row.append(check, star, main, remove);
+      box.append(row);
+    });
+  }
+
+  const originalToday = today;
+  today = function () {
+    originalToday();
+    paintPlanDates();
+    renderTomorrow();
+  };
+
+  const addTomorrow = document.querySelector('[data-section="tomorrow-tasks"] .add');
+  addTomorrow?.addEventListener('click', event => {
+    if (!isCurrentDay()) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const tomorrowKey = dateKey(offsetDate(key(), 1));
+    const day = ensureDay(tomorrowKey);
+    (day.todayList || (day.todayList = [])).push({ text: '', checked: false });
+    save();
+    renderTomorrow();
+    requestAnimationFrame(() => document.querySelector('#nextList .task:last-child input[type="text"]')?.focus());
+  }, true);
+
+  document.querySelector('.nav[data-view="today"]')?.addEventListener('click', () => {
+    active = key();
+    requestAnimationFrame(today);
+  });
+
   today();
 })();
