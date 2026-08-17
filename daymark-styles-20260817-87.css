@@ -14,3 +14,4 @@
 @media(max-width:700px){.time-slot.is-merged{grid-template-columns:18px 52px minmax(0,1fr) auto}}
 .sync-state{color:var(--accent);font-weight:600}
 .habit{cursor:grab;touch-action:none}.habit.dragging{opacity:.55}.habit.drop-target{outline:2px dashed var(--accent);outline-offset:3px}
+.habit-order-controls{position:absolute;right:-2px;top:-16px;display:flex;gap:1px;opacity:0;transition:opacity .15s}.habit:hover .habit-order-controls,.habit:focus-within .habit-order-controls{opacity:1}.habit-order-controls button{border:0;background:var(--card);color:var(--muted);font-size:11px;padding:1px 3px;line-height:1}.habit-order-controls button:hover{color:var(--accent)}
