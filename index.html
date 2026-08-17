@@ -250,7 +250,7 @@
 <div class="life-form-row"><label>日期<input id="lifeDate" type="date"></label><label>标题<input id="lifeTitle" maxlength="50" placeholder="给这段生活起个名字"></label></div>
 <label class="life-tag-label">标签<input id="lifeTags" maxlength="100" placeholder="例如：旅行、家人、美食（用逗号分隔）"></label>
 <label class="life-note-label">文字标注<textarea id="lifeNote" rows="5" placeholder="发生了什么、当时有什么感受……"></textarea></label>
-<label class="life-upload"><input id="lifeImages" type="file" accept="image/*" multiple><span>＋ 添加图片</span><small>支持一次选择多张</small></label>
+<label id="lifeUpload" class="life-upload"><input id="lifeImages" type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip" multiple><span>＋ 添加图片或文件</span><small>支持点击选择，也可以把图片或文件拖到这里</small></label>
 <div id="lifePreview" class="life-preview"></div>
 <div class="life-form-actions"><button id="cancelLifeEntry" type="button">取消</button><button id="saveLifeEntry" type="button">保存记录</button></div>
 </article>
