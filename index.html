@@ -343,6 +343,42 @@ document.getElementById('habitName').addEventListener('keydown',function(e){if(e
   paintTitle(document.querySelector('.nav.active')?.dataset.view || 'today');
 })();
 </script>
+<script>
+(() => {
+  const storageKey = 'daymark-v1';
+  const dayKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const previousDay = value => { const [year, month, day] = value.split('-').map(Number); return dayKey(new Date(year, month - 1, day - 1, 12)); };
+  const emptyDay = () => ({ mood: '一般', energy: 7, top: '', done: '', time: '', progress: '', reflection: '', obstacle: '', todayList: [], doneList: [], nextList: [], habits: {}, sleep: '', exercise: '', focus: '', finished: false });
+  const taskKey = task => `${String(task.text || '').trim()}\u0000${task.goalId || ''}`;
+  const carryForward = () => {
+    let state;
+    try { state = JSON.parse(localStorage.getItem(storageKey) || 'null'); } catch {}
+    if (!state?.days) return false;
+    const today = dayKey(new Date());
+    const yesterday = previousDay(today);
+    let changed = false;
+    Object.entries(state.days).forEach(([date, record]) => {
+      if (date < today && !record.finished) { record.finished = true; record.autoFinished = true; changed = true; }
+    });
+    const source = state.days[yesterday];
+    if (source && source.handoffTo !== today) {
+      const planned = (source.nextList || []).filter(task => String(task.text || '').trim());
+      const destination = state.days[today] || (state.days[today] = emptyDay());
+      destination.todayList = destination.todayList || [];
+      const seen = new Set(destination.todayList.filter(task => String(task.text || '').trim()).map(taskKey));
+      const additions = planned.filter(task => !seen.has(taskKey(task))).map(task => ({ ...task }));
+      if (additions.length) destination.todayList = [...additions, ...destination.todayList];
+      source.handoffTo = today;
+      changed = true;
+    }
+    if (changed) localStorage.setItem(storageKey, JSON.stringify(state));
+    return changed;
+  };
+  if (carryForward()) location.reload();
+  let currentDay = dayKey(new Date());
+  setInterval(() => { const nextDay = dayKey(new Date()); if (nextDay !== currentDay) { currentDay = nextDay; carryForward(); location.reload(); } }, 60000);
+})();
+</script>
 <script src="theme-cycle-20260817-31.js"></script>
 <script src="weather-forecast-20260817-54.js"></script>
 <script src="zoom-control-20260817-45.js"></script>
