@@ -326,6 +326,23 @@ document.getElementById('habitName').addEventListener('keydown',function(e){if(e
 </script>
 <script src="daymark-app-20260817-55.js">
 </script>
+<script>
+(() => {
+  const quotes = {
+    today: ['不积跬步，无以至千里。','千里之行，始于足下。','慢慢来，比较快。','自律给我自由。'],
+    goals: ['志之所趋，无远勿届。','心之所向，素履以往。','把目标放在心里，把脚步落在当下。','方向不必很多，足够清楚就好。'],
+    life: ['人间烟火气，最抚凡人心。','生活明朗，万物可爱。','把平凡的日子过得有滋有味。','热爱生活，生活也会回以温柔。'],
+    calendar: ['一寸光阴一寸金，寸金难买寸光阴。','明日复明日，明日何其多。','时间只负责流动，我们负责选择。','把今天安排好，就是对明天的尊重。'],
+    history: ['以人为镜，可以明得失。','回望来路，是为了走好下一程。','日日行，不怕千万里；常常做，不怕千万事。','所有经历，都会成为脚下的路。'],
+    styles: ['美是生活的一种秩序。','风格是你与世界相处的方式。','心有热爱，处处都有光。']
+  };
+  const quoteFor = view => { const pool = quotes[view] || quotes.today; const date = new Date().toISOString().slice(0, 10); const seed = [...`${date}-${view}`].reduce((sum, char) => sum + char.charCodeAt(0), 0); return pool[seed % pool.length]; };
+  const paintTitle = view => { const title = document.getElementById('title'); if (title) title.textContent = quoteFor(view); };
+  const previousView = window.view;
+  if (typeof previousView === 'function') window.view = view => { previousView(view); paintTitle(view); };
+  paintTitle(document.querySelector('.nav.active')?.dataset.view || 'today');
+})();
+</script>
 <script src="theme-cycle-20260817-31.js"></script>
 <script src="weather-forecast-20260817-54.js"></script>
 <script src="zoom-control-20260817-45.js"></script>
