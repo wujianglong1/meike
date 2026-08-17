@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#f4f1ea">
 <title>美刻｜日常计划与生活记录</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="daymark-styles-20260817-81.css">
+<link rel="stylesheet" href="daymark-styles-20260817-82.css">
 </head>
 <body>
 <div class="app">
@@ -44,7 +44,7 @@
 <p class="live-datetime"><span id="date"></span><span class="time-separator">·</span><span id="clock">00:00:00</span></p>
 <h1 id="title">今天，过得怎么样？</h1>
 </div>
-<div class="header-tools"><button id="moduleManager" class="module-manager-button" type="button">模块</button><div class="page-zoom"><span>页面</span><input id="pageZoom" type="range" min="60" max="110" step="1" value="85" aria-label="调整页面大小"><output id="zoomValue">85%</output><button id="zoomReset" type="button" title="根据窗口自动调整">自适应</button></div><button id="theme" aria-label="快速切换配色" title="快速切换配色">✦</button></div>
+<div class="header-tools"><button id="moduleManager" class="module-manager-button" type="button">模块</button><div class="page-zoom"><span>页面</span><input id="pageZoom" type="range" min="60" max="110" step="1" value="85" aria-label="调整页面大小"><output id="zoomValue">85%</output><button id="zoomReset" type="button" title="根据窗口自动调整">自适应</button></div><button id="pageRefresh" class="page-refresh" type="button" title="检查更新并刷新页面">↻ 刷新</button><button id="theme" aria-label="快速切换配色" title="快速切换配色">✦</button></div>
 </header>
 <section id="today" class="view active">
 <div id="modulePanel" class="module-panel card"><div><strong>今日页模块</strong><small>取消勾选即可隐藏，模块右上角可单独折叠</small></div><div id="moduleChoices" class="module-choices"></div><button id="showAllModules" type="button">全部显示</button></div>
@@ -332,6 +332,7 @@ document.getElementById('habitName').addEventListener('keydown',function(e){if(e
 <script src="goals-planning-20260817-1.js"></script>
 <script src="calendar-day-link-20260817-3.js"></script>
 <script src="time-schedule-20260817-2.js"></script>
+<script src="page-refresh-20260817-1.js"></script>
 <script src="secret-book-20260817-2.js"></script>
 <script src="secret-lock-20260817-1.js"></script>
 <script src="secret-title-20260817-1.js"></script>

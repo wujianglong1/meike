@@ -1,0 +1,4 @@
+@import url('daymark-styles-20260817-81.css');
+.header-tools .page-refresh{width:auto;min-width:58px;height:34px;padding:0 10px;border-radius:10px;font-size:12px;color:var(--muted);white-space:nowrap}
+.header-tools .page-refresh:hover{color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,transparent)}
+.header-tools .page-refresh:disabled{opacity:.65;cursor:wait}
