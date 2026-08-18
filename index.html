@@ -245,6 +245,7 @@
 <article class="card wisdom-card"><div class="wisdom-head"><div><em>先贤智慧</em><h2 id="wisdomTitle">今日故事</h2></div><button id="wisdomNext" type="button">换一则</button></div><p id="wisdomStory"></p><small id="wisdomSource"></small></article>
 <article class="card bookshelf-editor"><div class="heading"><div><em>加入书架</em><h2>添加一本书</h2></div></div><div class="bookshelf-form"><input id="bookTitle" maxlength="80" placeholder="书名"><input id="bookAuthor" maxlength="50" placeholder="作者（可选）"><input id="bookUrl" type="url" placeholder="在线阅读网址，例如 https://…"><textarea id="bookNote" rows="2" placeholder="想读它的理由（可选）"></textarea><button id="saveBook" type="button">加入书架</button></div></article>
 <div id="bookList" class="book-list"></div>
+<article class="card document-shelf"><div class="heading"><div><em>文档库</em><h2>常用文档</h2><p class="document-subtitle">把需要反复查看的 Word、PPT、PDF 和表格集中放在这里。</p></div><label class="document-add"><span>＋ 添加文档</span><input id="documentFile" type="file" accept=".doc,.docx,.ppt,.pptx,.pdf,.xls,.xlsx,.txt,.md,.rtf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain"></label></div><div id="documentList" class="document-list"></div></article>
 </section>
 <section id="life" class="view">
 <div class="life-head">
@@ -402,6 +403,7 @@ document.getElementById('habitName').addEventListener('keydown',function(e){if(e
 <script src="link-book-20260817-2.js"></script>
 <script src="link-title-20260817-1.js"></script>
 <script src="bookshelf-20260818-1.js"></script>
+<script src="document-shelf-20260818-1.js"></script>
 </body>
 </html>
 
