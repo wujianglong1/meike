@@ -578,6 +578,15 @@
       event.target.value = '';
     });
     const notesPanel = reader.querySelector('.literature-notes');
+    const noteEditor = $('literatureNoteInput');
+    const savedNoteHeight = Number(localStorage.getItem('meike-literature-note-editor-height'));
+    if (savedNoteHeight >= 120) noteEditor.style.height = `${savedNoteHeight}px`;
+    if (window.ResizeObserver) {
+      const noteEditorResizeObserver = new ResizeObserver(() => {
+        if (noteEditor.offsetHeight >= 120) localStorage.setItem('meike-literature-note-editor-height', String(Math.round(noteEditor.getBoundingClientRect().height)));
+      });
+      noteEditorResizeObserver.observe(noteEditor);
+    }
     notesPanel.addEventListener('wheel', event => {
       const editor = $('literatureNoteInput');
       const list = $('literatureNotesList');

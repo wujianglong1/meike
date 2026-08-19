@@ -12,8 +12,8 @@
 #literatureReader .literature-reader-workspace{min-height:0!important;height:100%!important}
 #literatureReader .literature-notes{display:flex!important;flex-direction:column!important;min-height:0!important;height:100%!important;overflow:hidden!important}
 #literatureReader .literature-notes-head,#literatureReader .literature-note-composer{flex:0 0 auto}
-#literatureReader .literature-note-composer{max-height:286px;overflow:hidden}
-#literatureReader .literature-note-editor{height:180px!important;min-height:120px!important;max-height:180px!important;overflow-y:scroll!important;overflow-x:hidden!important;overscroll-behavior:contain;scrollbar-gutter:stable;scrollbar-width:thin}
+#literatureReader .literature-note-composer{max-height:none;overflow:visible}
+#literatureReader .literature-note-editor{height:180px!important;min-height:120px!important;max-height:none!important;resize:vertical;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;scrollbar-gutter:stable;scrollbar-width:thin}
 #literatureReader .literature-note-editor::-webkit-scrollbar,#literatureReader .literature-notes-list::-webkit-scrollbar{width:10px}
 #literatureReader .literature-note-editor::-webkit-scrollbar-thumb,#literatureReader .literature-notes-list::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--accent) 42%,var(--line));border:3px solid transparent;border-radius:8px;background-clip:padding-box}
 #literatureReader .literature-notes-list{flex:1 1 auto!important;min-height:0!important;height:auto!important;overflow-y:scroll!important;overflow-x:hidden!important;overscroll-behavior:contain;scrollbar-gutter:stable}
