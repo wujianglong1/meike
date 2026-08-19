@@ -578,6 +578,15 @@
       event.target.value = '';
     });
     const notesPanel = reader.querySelector('.literature-notes');
+    notesPanel.addEventListener('wheel', event => {
+      const editor = $('literatureNoteInput');
+      const list = $('literatureNotesList');
+      const target = event.target.closest('.literature-note-editor') ? editor : list;
+      if (!target || target.scrollHeight <= target.clientHeight) return;
+      const before = target.scrollTop;
+      target.scrollTop += event.deltaY;
+      if (target.scrollTop !== before) event.preventDefault();
+    }, { passive: false });
     const clearNotesDragState = () => notesPanel.classList.remove('is-dragging-file');
     const hasDraggedFiles = event => Array.from(event.dataTransfer?.types || []).includes('Files');
     notesPanel.addEventListener('dragenter', event => {
