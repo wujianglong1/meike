@@ -2,7 +2,7 @@
   const storageKey = 'meike-literature-library-v1';
   const fileDbName = 'meike-literature-files-v1';
   const fileStore = 'pdfs';
-  const supportedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md', 'markdown', 'rtf', 'csv'];
+  const supportedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md', 'markdown', 'rtf', 'csv', 'html', 'htm'];
   const supportedAccept = supportedExtensions.map(ext => `.${ext}`).join(',');
   const $ = id => document.getElementById(id);
   let editingId = null;
@@ -114,7 +114,7 @@
       const strong = importBox.querySelector('strong');
       if (strong) strong.textContent = '拖入 PDF、Word、PPT 等文件，自动添加到文献库';
       const hint = importBox.querySelector('small');
-      if (hint) hint.textContent = '支持 PDF、Word、PPT、Excel、TXT、Markdown 等格式；可随时编辑文献信息';
+      if (hint) hint.textContent = '支持 PDF、Word、PPT、Excel、TXT、Markdown、HTML 等格式；可随时编辑文献信息';
     }
     const addButton = $('newLiterature');
     if (head && addButton && !$('newLiteratureFolder')) {
