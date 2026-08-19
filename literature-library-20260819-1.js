@@ -214,9 +214,25 @@
       await importReaderNotes(event.target.files?.[0]);
       event.target.value = '';
     });
-    $('literatureNotesList').addEventListener('dragover', event => event.preventDefault());
-    $('literatureNotesList').addEventListener('drop', async event => {
+    const notesPanel = reader.querySelector('.literature-notes');
+    const clearNotesDragState = () => notesPanel.classList.remove('is-dragging-file');
+    const hasDraggedFiles = event => Array.from(event.dataTransfer?.types || []).includes('Files');
+    notesPanel.addEventListener('dragenter', event => {
+      if (!hasDraggedFiles(event)) return;
       event.preventDefault();
+      notesPanel.classList.add('is-dragging-file');
+    });
+    notesPanel.addEventListener('dragover', event => {
+      if (!hasDraggedFiles(event)) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'copy';
+    });
+    notesPanel.addEventListener('dragleave', event => {
+      if (!notesPanel.contains(event.relatedTarget)) clearNotesDragState();
+    });
+    notesPanel.addEventListener('drop', async event => {
+      event.preventDefault();
+      clearNotesDragState();
       await importReaderNotes(event.dataTransfer?.files?.[0]);
     });
     $('literatureNoteInput').addEventListener('keydown', event => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') saveReaderNote(); });
