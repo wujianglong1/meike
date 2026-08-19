@@ -1,5 +1,7 @@
 (() => {
   const storageKey = 'meike-literature-library-v1';
+  const fileDbName = 'meike-literature-files-v1';
+  const fileStore = 'pdfs';
   const $ = id => document.getElementById(id);
   let editingId = null;
 
@@ -34,6 +36,76 @@
   };
   const tagsFor = item => String(item.tags || '').split(/[，,]/).map(tag => tag.trim()).filter(Boolean);
   const setText = (id, value) => { $(id).value = value || ''; };
+  const formatSize = bytes => bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+
+  const openFileDb = () => new Promise((resolve, reject) => {
+    const request = indexedDB.open(fileDbName, 1);
+    request.onupgradeneeded = () => request.result.createObjectStore(fileStore, { keyPath: 'id' });
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  const fileAction = async (mode, action) => {
+    const db = await openFileDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(fileStore, mode);
+      const request = action(tx.objectStore(fileStore));
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+      tx.oncomplete = () => db.close();
+    });
+  };
+  const savePdf = item => fileAction('readwrite', store => store.put(item));
+  const readPdf = id => fileAction('readonly', store => store.get(id));
+  const removePdf = id => fileAction('readwrite', store => store.delete(id));
+  const cleanPdfString = value => String(value || '').replace(/\\([()\\])/g, '$1').replace(/\\n/g, ' ').replace(/\\r/g, ' ').replace(/\\\d{3}/g, ' ').replace(/\s+/g, ' ').trim();
+  const infoValue = (raw, field) => {
+    const match = raw.match(new RegExp(`/${field}\\s*\\(([^]{0,1000}?)\\)`, 'i'));
+    return cleanPdfString(match?.[1] || '');
+  };
+  const filenameTitle = name => name.replace(/\.pdf$/i, '').replace(/[_.-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  async function identifyPdf(file) {
+    const raw = new TextDecoder('latin1').decode(await file.arrayBuffer());
+    const doi = raw.match(/10\.\d{4,9}\/[\w.()/:;-]+/i)?.[0]?.replace(/[).,;]+$/, '') || '';
+    const metaTitle = infoValue(raw, 'Title');
+    const metaAuthors = infoValue(raw, 'Author');
+    const year = raw.match(/(?:19|20)\d{2}/)?.[0] || '';
+    return {
+      title: metaTitle && metaTitle.length > 2 && metaTitle.length < 220 ? metaTitle : filenameTitle(file.name),
+      authors: metaAuthors && metaAuthors.length < 180 ? metaAuthors : '',
+      year,
+      url: doi ? `https://doi.org/${doi}` : '',
+      source: '',
+      tags: '',
+      note: ''
+    };
+  }
+  const setImportHint = text => { const hint = $('literatureImportHint'); if (hint) hint.textContent = text; };
+  async function openPdf(item) {
+    const stored = await readPdf(item.id);
+    if (!stored?.blob) { alert('该 PDF 只保存在添加它的设备上。请在本机重新拖入文件。'); return; }
+    const url = URL.createObjectURL(stored.blob);
+    window.open(url, '_blank', 'noopener');
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+  async function importPdf(file) {
+    if (!file || !(/\.pdf$/i.test(file.name) || file.type === 'application/pdf')) return;
+    if (file.size > 50 * 1024 * 1024) { alert('单篇 PDF 请控制在 50MB 以内。'); return; }
+    setImportHint('正在识别 PDF 信息…');
+    try {
+      const info = await identifyPdf(file);
+      const id = `literature-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      await savePdf({ id, name: file.name, size: file.size, type: file.type, addedAt: Date.now(), blob: file });
+      save([{ id, ...info, status: 'unread', pdfName: file.name, pdfSize: file.size, createdAt: stamp(), updatedAt: stamp() }, ...read()]);
+      setImportHint(`已添加《${info.title}》，识别信息可随时编辑`);
+      render();
+    } catch {
+      setImportHint('已添加 PDF；未能识别的信息可在“编辑”中补充');
+      const id = `literature-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      await savePdf({ id, name: file.name, size: file.size, type: file.type, addedAt: Date.now(), blob: file });
+      save([{ id, title: filenameTitle(file.name), authors: '', year: '', source: '', url: '', status: 'unread', tags: '', note: '', pdfName: file.name, pdfSize: file.size, createdAt: stamp(), updatedAt: stamp() }, ...read()]);
+      render();
+    }
+  }
 
   function summary(records) {
     const values = { unread: 0, reading: 0, read: 0 };
@@ -131,6 +203,16 @@
         note.textContent = item.note;
         content.append(note);
       }
+      if (item.pdfName) {
+        const file = document.createElement('div');
+        file.className = 'literature-card-file';
+        const open = document.createElement('button');
+        open.type = 'button';
+        open.textContent = `PDF · ${item.pdfName}${item.pdfSize ? ` (${formatSize(item.pdfSize)})` : ''}`;
+        open.addEventListener('click', () => openPdf(item));
+        file.append(open);
+        content.append(file);
+      }
       main.append(marker, content);
       const actions = document.createElement('div');
       actions.className = 'literature-card-actions';
@@ -154,6 +236,7 @@
       remove.setAttribute('aria-label', `删除：${item.title}`);
       remove.addEventListener('click', () => {
         if (!confirm(`删除《${item.title}》吗？`)) return;
+        if (item.pdfName) removePdf(item.id).catch(() => {});
         save(read().filter(record => record.id !== item.id));
         render();
       });
@@ -213,6 +296,8 @@
       status: $('literatureStatus').value,
       tags: $('literatureTags').value.trim(),
       note: $('literatureNote').value.trim(),
+      pdfName: old?.pdfName || '',
+      pdfSize: old?.pdfSize || 0,
       createdAt: old?.createdAt || stamp(),
       updatedAt: stamp()
     };
@@ -238,6 +323,10 @@
   $('saveLiterature')?.addEventListener('click', saveEditor);
   $('literatureSearch')?.addEventListener('input', render);
   $('literatureStatusFilter')?.addEventListener('change', render);
+  $('literaturePdf')?.addEventListener('change', event => { const file = event.target.files?.[0]; event.target.value = ''; importPdf(file); });
+  ['dragenter', 'dragover'].forEach(type => $('literatureImport')?.addEventListener(type, event => { event.preventDefault(); $('literatureImport').classList.add('is-dragging'); }));
+  ['dragleave', 'drop'].forEach(type => $('literatureImport')?.addEventListener(type, event => { event.preventDefault(); $('literatureImport').classList.remove('is-dragging'); }));
+  $('literatureImport')?.addEventListener('drop', event => importPdf(event.dataTransfer?.files?.[0]));
   $('literatureEditor')?.addEventListener('keydown', event => {
     if (event.key === 'Escape') closeEditor();
     if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') saveEditor();
