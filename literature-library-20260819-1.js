@@ -5,6 +5,8 @@
   const $ = id => document.getElementById(id);
   let editingId = null;
   let readerUrl = '';
+  let readingId = '';
+  let editingNoteId = '';
 
   const read = () => {
     try {
@@ -81,6 +83,82 @@
     };
   }
   const setImportHint = text => { const hint = $('literatureImportHint'); if (hint) hint.textContent = text; };
+  function updateReadingItem(transform) {
+    const records = read();
+    const item = records.find(record => record.id === readingId);
+    if (!item) return;
+    transform(item);
+    item.updatedAt = stamp();
+    save(records);
+  }
+  function renderReaderNotes() {
+    const list = $('literatureNotesList');
+    const input = $('literatureNoteInput');
+    const saveButton = $('literatureNoteSave');
+    if (!list || !input || !saveButton) return;
+    const item = read().find(record => record.id === readingId);
+    const notes = Array.isArray(item?.notes) ? item.notes : [];
+    list.textContent = '';
+    if (!notes.length) {
+      const empty = document.createElement('p');
+      empty.className = 'literature-notes-empty';
+      empty.textContent = '还没有笔记。记录要点、疑问或实验启发。';
+      list.append(empty);
+    }
+    notes.forEach(note => {
+      const card = document.createElement('article');
+      card.className = 'literature-note-card';
+      const text = document.createElement('p');
+      text.textContent = note.text || '';
+      const footer = document.createElement('footer');
+      const date = document.createElement('time');
+      date.textContent = new Date(note.updatedAt || note.createdAt || Date.now()).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const actions = document.createElement('div');
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.textContent = '编辑';
+      edit.addEventListener('click', () => {
+        editingNoteId = note.id;
+        input.value = note.text || '';
+        input.focus();
+        saveButton.textContent = '保存修改';
+      });
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'literature-note-delete';
+      remove.textContent = '×';
+      remove.title = '删除笔记';
+      remove.setAttribute('aria-label', '删除笔记');
+      remove.addEventListener('click', () => {
+        updateReadingItem(record => { record.notes = (record.notes || []).filter(entry => entry.id !== note.id); });
+        if (editingNoteId === note.id) { editingNoteId = ''; input.value = ''; saveButton.textContent = '添加笔记'; }
+        renderReaderNotes();
+      });
+      actions.append(edit, remove);
+      footer.append(date, actions);
+      card.append(text, footer);
+      list.append(card);
+    });
+  }
+  function saveReaderNote() {
+    const input = $('literatureNoteInput');
+    const button = $('literatureNoteSave');
+    const text = input?.value.trim();
+    if (!text || !readingId) { input?.focus(); return; }
+    const now = stamp();
+    updateReadingItem(item => {
+      const notes = Array.isArray(item.notes) ? item.notes : [];
+      if (editingNoteId) {
+        item.notes = notes.map(note => note.id === editingNoteId ? { ...note, text, updatedAt: now } : note);
+      } else {
+        item.notes = [{ id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, text, createdAt: now, updatedAt: now }, ...notes];
+      }
+    });
+    editingNoteId = '';
+    input.value = '';
+    button.textContent = '添加笔记';
+    renderReaderNotes();
+  }
   function closePdfReader() {
     const reader = $('literatureReader');
     const frame = $('literatureReaderFrame');
@@ -89,6 +167,8 @@
     if (frame) frame.removeAttribute('src');
     if (readerUrl) URL.revokeObjectURL(readerUrl);
     readerUrl = '';
+    readingId = '';
+    editingNoteId = '';
   }
   function createPdfReader() {
     let reader = $('literatureReader');
@@ -97,10 +177,12 @@
     reader.id = 'literatureReader';
     reader.className = 'literature-reader';
     reader.hidden = true;
-    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" type="button">返回文献库</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器">×</button></header><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地 PDF 阅读器"></iframe>';
+    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地 PDF 阅读器"></iframe></section><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small>与当前文献关联保存</small></div></div><div class="literature-note-composer"><textarea id="literatureNoteInput" rows="4" placeholder="写下阅读要点、方法、数据或疑问"></textarea><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
     document.body.append(reader);
     $('literatureReaderBack').addEventListener('click', closePdfReader);
     $('literatureReaderClose').addEventListener('click', closePdfReader);
+    $('literatureNoteSave').addEventListener('click', saveReaderNote);
+    $('literatureNoteInput').addEventListener('keydown', event => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') saveReaderNote(); });
     document.addEventListener('keydown', event => { if (event.key === 'Escape') closePdfReader(); });
     document.addEventListener('click', event => { if (event.target.closest('.nav')) closePdfReader(); });
     return reader;
@@ -111,9 +193,12 @@
     closePdfReader();
     const reader = createPdfReader();
     readerUrl = URL.createObjectURL(stored.blob);
+    readingId = item.id;
+    editingNoteId = '';
     $('literatureReaderTitle').textContent = item.title || item.pdfName || '本地文献';
     $('literatureReaderFrame').src = `${readerUrl}#view=FitH`;
     reader.hidden = false;
+    renderReaderNotes();
   }
   async function importPdf(file) {
     if (!file || !(/\.pdf$/i.test(file.name) || file.type === 'application/pdf')) return;
