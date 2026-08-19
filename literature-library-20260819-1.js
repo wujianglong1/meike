@@ -383,13 +383,29 @@
   function saveNoteDraft() {
     if (!readingId) return;
     const payload = noteEditorPayload();
-    if (!payload.text) { localStorage.removeItem(noteDraftKey(readingId)); return; }
-    localStorage.setItem(noteDraftKey(readingId), JSON.stringify({ ...payload, editingNoteId }));
+    const draftKey = noteDraftKey(readingId);
+    if (!payload.text) {
+      localStorage.removeItem(draftKey);
+      const records = read();
+      const item = records.find(record => record.id === readingId);
+      if (item?.noteDraft) { delete item.noteDraft; localStorage.setItem(storageKey, JSON.stringify(records)); }
+      return;
+    }
+    const draft = { ...payload, editingNoteId, updatedAt: Date.now() };
+    localStorage.setItem(draftKey, JSON.stringify(draft));
+    const records = read();
+    const item = records.find(record => record.id === readingId);
+    if (item) { item.noteDraft = draft; localStorage.setItem(storageKey, JSON.stringify(records)); }
   }
   function clearNoteEditor() {
     const editor = $('literatureNoteInput');
     if (editor) editor.innerHTML = '';
-    if (readingId) localStorage.removeItem(noteDraftKey(readingId));
+    if (readingId) {
+      localStorage.removeItem(noteDraftKey(readingId));
+      const records = read();
+      const item = records.find(record => record.id === readingId);
+      if (item?.noteDraft) { delete item.noteDraft; localStorage.setItem(storageKey, JSON.stringify(records)); }
+    }
     editingNoteId = '';
     const button = $('literatureNoteSave');
     if (button) button.textContent = '添加笔记';
@@ -397,6 +413,7 @@
   function restoreNoteDraft() {
     let draft = null;
     try { draft = JSON.parse(localStorage.getItem(noteDraftKey(readingId)) || 'null'); } catch { draft = null; }
+    if (!draft) draft = read().find(record => record.id === readingId)?.noteDraft || null;
     editingNoteId = draft?.editingNoteId || '';
     setNoteEditor(draft || '');
     const button = $('literatureNoteSave');
@@ -522,6 +539,7 @@
     const reader = $('literatureReader');
     const frame = $('literatureReaderFrame');
     if (!reader || reader.hidden) return;
+    saveNoteDraft();
     reader.hidden = true;
     if (frame) frame.removeAttribute('src');
     if (readerUrl) URL.revokeObjectURL(readerUrl);
@@ -619,6 +637,7 @@
     $('literatureNoteInput').addEventListener('input', saveNoteDraft);
     $('literatureNoteInput').addEventListener('paste', insertNoteContent);
     $('literatureNoteInput').addEventListener('keydown', event => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') saveReaderNote(); });
+    window.addEventListener('beforeunload', saveNoteDraft);
     document.addEventListener('keydown', event => { if (event.key === 'Escape') closePdfReader(); });
     document.addEventListener('click', event => { if (event.target.closest('.nav')) closePdfReader(); });
     return reader;
