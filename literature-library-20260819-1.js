@@ -431,16 +431,25 @@
     document.addEventListener('click', event => { if (event.target.closest('.nav')) closePdfReader(); });
     return reader;
   }
+  async function prepareReaderBlob(blob, extension) {
+    if (extension !== 'html' && extension !== 'htm') return blob;
+    const source = await blob.text();
+    const style = '<style id="meike-html-reader-style">html,body{background:#fff!important;color:#1f2937!important;}body{min-height:100vh!important;margin:0!important;padding:24px!important;box-sizing:border-box!important;font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif!important;line-height:1.7!important;}body *{color:inherit!important;background-color:transparent!important;}a{color:#2563eb!important;text-decoration:underline!important;}img{max-width:100%!important;height:auto!important;}table{max-width:100%!important;border-collapse:collapse!important;}td,th{border:1px solid #d1d5db!important;padding:6px 9px!important;}</style>';
+    const themed = /<\/head>/i.test(source) ? source.replace(/<\/head>/i, `${style}</head>`) : `${style}${source}`;
+    return new Blob([themed], { type: 'text/html' });
+  }
   async function openPdf(item) {
     const stored = await readPdf(item.id);
     if (!stored?.blob) { alert('该文件只保存在添加它的设备上。请在本机重新拖入文件。'); return; }
     closePdfReader();
     const reader = createPdfReader();
-    readerUrl = URL.createObjectURL(stored.blob);
+    const extension = extensionOf(item.pdfName);
+    const localBlob = await prepareReaderBlob(stored.blob, extension);
+    readerUrl = URL.createObjectURL(localBlob);
     readingId = item.id;
     editingNoteId = '';
     $('literatureReaderTitle').textContent = item.title || item.pdfName || '本地文献';
-    $('literatureReaderFrame').src = extensionOf(item.pdfName) === 'pdf' ? `${readerUrl}#view=FitH` : readerUrl;
+    $('literatureReaderFrame').src = extension === 'pdf' ? `${readerUrl}#view=FitH` : readerUrl;
     reader.hidden = false;
     const savedNotesWidth = Number(localStorage.getItem('meike-literature-notes-width'));
     if (savedNotesWidth >= 260) {
