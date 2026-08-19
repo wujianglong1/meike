@@ -315,18 +315,102 @@
     }
     return fragment;
   }
-  function renderNoteComposerPreview() {
-    const input = $('literatureNoteInput');
-    const preview = $('literatureNotePreview');
-    if (!input || !preview) return;
-    preview.textContent = '';
-    const source = input.value || '';
-    if (!source.trim()) {
-      preview.hidden = true;
-      return;
-    }
-    preview.hidden = false;
-    preview.append(markdownNoteFragment(source));
+  const noteDraftKey = id => `meike-literature-note-draft-v1:${id}`;
+  function noteHtmlFromMarkdown(source) {
+    const holder = document.createElement('div');
+    holder.append(markdownNoteFragment(source));
+    return holder.innerHTML;
+  }
+  function sanitizeNoteHtml(source) {
+    const template = document.createElement('template');
+    template.innerHTML = String(source || '');
+    const holder = document.createElement('div');
+    const allowed = new Set(['p', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a']);
+    const aliases = { B: 'strong', I: 'em' };
+    const clean = node => {
+      if (node.nodeType === 3) return document.createTextNode(node.nodeValue || '');
+      if (node.nodeType !== 1) return document.createDocumentFragment();
+      const tag = aliases[node.tagName] || node.tagName.toLowerCase();
+      if (!allowed.has(tag)) {
+        const fragment = document.createDocumentFragment();
+        node.childNodes.forEach(child => fragment.append(clean(child)));
+        return fragment;
+      }
+      const element = document.createElement(tag);
+      if (tag === 'a') {
+        const href = node.getAttribute('href') || '';
+        if (/^(https?:|mailto:)/i.test(href)) { element.href = href; element.target = '_blank'; element.rel = 'noopener'; }
+      }
+      node.childNodes.forEach(child => element.append(clean(child)));
+      return element;
+    };
+    template.content.childNodes.forEach(node => holder.append(clean(node)));
+    return holder.innerHTML;
+  }
+  function noteHtmlFragment(source) {
+    const holder = document.createElement('div');
+    holder.innerHTML = sanitizeNoteHtml(source);
+    const fragment = document.createDocumentFragment();
+    while (holder.firstChild) fragment.append(holder.firstChild);
+    return fragment;
+  }
+  function setNoteEditor(note) {
+    const editor = $('literatureNoteInput');
+    if (!editor) return;
+    const source = typeof note === 'string' ? { text: note } : (note || {});
+    editor.innerHTML = source.html ? sanitizeNoteHtml(source.html) : noteHtmlFromMarkdown(source.text || '');
+  }
+  function noteEditorPayload() {
+    const editor = $('literatureNoteInput');
+    const text = String(editor?.innerText || editor?.textContent || '').replace(/\r\n?/g, '\n').trim();
+    const hasRichFormat = Boolean(editor?.querySelector('h1,h2,h3,h4,h5,h6,strong,em,ul,ol,blockquote,code,pre,a'));
+    return { text, html: hasRichFormat ? sanitizeNoteHtml(editor.innerHTML) : noteHtmlFromMarkdown(text) };
+  }
+  function saveNoteDraft() {
+    if (!readingId) return;
+    const payload = noteEditorPayload();
+    if (!payload.text) { localStorage.removeItem(noteDraftKey(readingId)); return; }
+    localStorage.setItem(noteDraftKey(readingId), JSON.stringify({ ...payload, editingNoteId }));
+  }
+  function clearNoteEditor() {
+    const editor = $('literatureNoteInput');
+    if (editor) editor.innerHTML = '';
+    if (readingId) localStorage.removeItem(noteDraftKey(readingId));
+    editingNoteId = '';
+    const button = $('literatureNoteSave');
+    if (button) button.textContent = '添加笔记';
+  }
+  function restoreNoteDraft() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(noteDraftKey(readingId)) || 'null'); } catch { draft = null; }
+    editingNoteId = draft?.editingNoteId || '';
+    setNoteEditor(draft || '');
+    const button = $('literatureNoteSave');
+    if (button) button.textContent = editingNoteId ? '保存修改' : '添加笔记';
+  }
+  function insertNoteContent(event) {
+    const editor = $('literatureNoteInput');
+    const clipboard = event.clipboardData;
+    if (!editor || !clipboard) return;
+    const html = clipboard.getData('text/html');
+    const text = clipboard.getData('text/plain');
+    if (!html && !text) return;
+    event.preventDefault();
+    const holder = document.createElement('div');
+    const hasRichClipboard = /<(h[1-6]|strong|b|em|i|ul|ol|li|blockquote|code|pre|a)\b/i.test(html);
+    holder.innerHTML = html && hasRichClipboard ? sanitizeNoteHtml(html) : noteHtmlFromMarkdown(text || html.replace(/<[^>]+>/g, ''));
+    const fragment = document.createDocumentFragment();
+    while (holder.firstChild) fragment.append(holder.firstChild);
+    const selection = window.getSelection();
+    if (selection?.rangeCount) {
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(fragment);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    } else editor.append(fragment);
+    saveNoteDraft();
   }
   async function importReaderNotes(file) {
     const status = $('literatureNoteImportStatus');
@@ -371,7 +455,7 @@
       card.className = 'literature-note-card';
       const text = document.createElement('div');
       text.className = 'literature-note-markdown';
-      text.append(markdownNoteFragment(note.text || ''));
+      text.append(note.html ? noteHtmlFragment(note.html) : markdownNoteFragment(note.text || ''));
       const footer = document.createElement('footer');
       const date = document.createElement('time');
       date.textContent = new Date(note.updatedAt || note.createdAt || Date.now()).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -381,10 +465,10 @@
       edit.textContent = '编辑';
       edit.addEventListener('click', () => {
         editingNoteId = note.id;
-        input.value = note.text || '';
+        setNoteEditor(note);
         input.focus();
         saveButton.textContent = '保存修改';
-        renderNoteComposerPreview();
+        saveNoteDraft();
       });
       const remove = document.createElement('button');
       remove.type = 'button';
@@ -394,7 +478,7 @@
       remove.setAttribute('aria-label', '删除笔记');
       remove.addEventListener('click', () => {
         updateReadingItem(record => { record.notes = (record.notes || []).filter(entry => entry.id !== note.id); });
-        if (editingNoteId === note.id) { editingNoteId = ''; input.value = ''; saveButton.textContent = '添加笔记'; }
+        if (editingNoteId === note.id) clearNoteEditor();
         renderReaderNotes();
       });
       actions.append(edit, remove);
@@ -406,21 +490,18 @@
   function saveReaderNote() {
     const input = $('literatureNoteInput');
     const button = $('literatureNoteSave');
-    const text = input?.value.trim();
-    if (!text || !readingId) { input?.focus(); return; }
+    const payload = noteEditorPayload();
+    if (!payload.text || !readingId) { input?.focus(); return; }
     const now = stamp();
     updateReadingItem(item => {
       const notes = Array.isArray(item.notes) ? item.notes : [];
       if (editingNoteId) {
-        item.notes = notes.map(note => note.id === editingNoteId ? { ...note, text, updatedAt: now } : note);
+        item.notes = notes.map(note => note.id === editingNoteId ? { ...note, text: payload.text, html: payload.html, updatedAt: now } : note);
       } else {
-        item.notes = [{ id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, text, createdAt: now, updatedAt: now }, ...notes];
+        item.notes = [{ id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, text: payload.text, html: payload.html, createdAt: now, updatedAt: now }, ...notes];
       }
     });
-    editingNoteId = '';
-    input.value = '';
-    button.textContent = '添加笔记';
-    renderNoteComposerPreview();
+    clearNoteEditor();
     renderReaderNotes();
   }
   function closePdfReader() {
@@ -441,7 +522,7 @@
     reader.id = 'literatureReader';
     reader.className = 'literature-reader';
     reader.hidden = true;
-    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地文献阅读器"></iframe></section><div id="literatureReaderDivider" class="literature-reader-divider" role="separator" aria-label="调整文献与笔记宽度" aria-orientation="vertical" tabindex="0"></div><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small id="literatureNoteImportStatus">与当前文献关联保存</small></div><label class="literature-note-import" title="导入 TXT 或 Markdown 笔记文件">导入笔记<input id="literatureNoteFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown"></label></div><div class="literature-note-composer"><textarea id="literatureNoteInput" rows="4" placeholder="写下阅读要点、方法、数据或疑问"></textarea><div id="literatureNotePreview" class="literature-note-preview" hidden></div><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
+    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地文献阅读器"></iframe></section><div id="literatureReaderDivider" class="literature-reader-divider" role="separator" aria-label="调整文献与笔记宽度" aria-orientation="vertical" tabindex="0"></div><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small id="literatureNoteImportStatus">与当前文献关联保存</small></div><label class="literature-note-import" title="导入 TXT 或 Markdown 笔记文件">导入笔记<input id="literatureNoteFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown"></label></div><div class="literature-note-composer"><div id="literatureNoteInput" class="literature-note-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="粘贴或写下阅读要点、方法、数据或疑问"></div><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
     if (!document.getElementById('literature-note-markdown-style')) {
       const style = document.createElement('style');
       style.id = 'literature-note-markdown-style';
@@ -503,7 +584,8 @@
       clearNotesDragState();
       await importReaderNotes(event.dataTransfer?.files?.[0]);
     });
-    $('literatureNoteInput').addEventListener('input', renderNoteComposerPreview);
+    $('literatureNoteInput').addEventListener('input', saveNoteDraft);
+    $('literatureNoteInput').addEventListener('paste', insertNoteContent);
     $('literatureNoteInput').addEventListener('keydown', event => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') saveReaderNote(); });
     document.addEventListener('keydown', event => { if (event.key === 'Escape') closePdfReader(); });
     document.addEventListener('click', event => { if (event.target.closest('.nav')) closePdfReader(); });
@@ -535,8 +617,8 @@
       const maxWidth = Math.max(260, Math.min(620, workspace.clientWidth - 330));
       workspace.style.setProperty('--literature-notes-width', `${Math.min(savedNotesWidth, maxWidth)}px`);
     }
+    restoreNoteDraft();
     renderReaderNotes();
-    renderNoteComposerPreview();
   }
   async function importPdf(file) {
     if (!isSupportedFile(file)) { if (file) alert('暂不支持这种文件格式。'); return; }
