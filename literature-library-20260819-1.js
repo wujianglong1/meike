@@ -91,6 +91,34 @@
     item.updatedAt = stamp();
     save(records);
   }
+  function importedNoteParts(text) {
+    const clean = String(text || '').replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n').trim();
+    return clean.split(/\n\s*\n+/).map(part => part.trim()).filter(Boolean).slice(0, 200);
+  }
+  async function importReaderNotes(file) {
+    const status = $('literatureNoteImportStatus');
+    const extension = file?.name?.split('.').pop()?.toLowerCase();
+    if (!file || !['txt', 'md', 'markdown'].includes(extension)) {
+      if (status) status.textContent = '请选择 TXT 或 Markdown 笔记文件。';
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      if (status) status.textContent = '笔记文件请控制在 1MB 以内。';
+      return;
+    }
+    const parts = importedNoteParts(await file.text());
+    if (!parts.length) {
+      if (status) status.textContent = '文件中没有可导入的文字。';
+      return;
+    }
+    const now = stamp();
+    updateReadingItem(item => {
+      const notes = Array.isArray(item.notes) ? item.notes : [];
+      item.notes = [...parts.map(text => ({ id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, text, createdAt: now, updatedAt: now, sourceName: file.name })), ...notes];
+    });
+    if (status) status.textContent = `已导入 ${parts.length} 条笔记`;
+    renderReaderNotes();
+  }
   function renderReaderNotes() {
     const list = $('literatureNotesList');
     const input = $('literatureNoteInput');
@@ -177,11 +205,20 @@
     reader.id = 'literatureReader';
     reader.className = 'literature-reader';
     reader.hidden = true;
-    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地 PDF 阅读器"></iframe></section><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small>与当前文献关联保存</small></div></div><div class="literature-note-composer"><textarea id="literatureNoteInput" rows="4" placeholder="写下阅读要点、方法、数据或疑问"></textarea><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
+    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地 PDF 阅读器"></iframe></section><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small id="literatureNoteImportStatus">与当前文献关联保存</small></div><label class="literature-note-import" title="导入 TXT 或 Markdown 笔记文件">导入笔记<input id="literatureNoteFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown"></label></div><div class="literature-note-composer"><textarea id="literatureNoteInput" rows="4" placeholder="写下阅读要点、方法、数据或疑问"></textarea><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
     document.body.append(reader);
     $('literatureReaderBack').addEventListener('click', closePdfReader);
     $('literatureReaderClose').addEventListener('click', closePdfReader);
     $('literatureNoteSave').addEventListener('click', saveReaderNote);
+    $('literatureNoteFile').addEventListener('change', async event => {
+      await importReaderNotes(event.target.files?.[0]);
+      event.target.value = '';
+    });
+    $('literatureNotesList').addEventListener('dragover', event => event.preventDefault());
+    $('literatureNotesList').addEventListener('drop', async event => {
+      event.preventDefault();
+      await importReaderNotes(event.dataTransfer?.files?.[0]);
+    });
     $('literatureNoteInput').addEventListener('keydown', event => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') saveReaderNote(); });
     document.addEventListener('keydown', event => { if (event.key === 'Escape') closePdfReader(); });
     document.addEventListener('click', event => { if (event.target.closest('.nav')) closePdfReader(); });
