@@ -315,6 +315,19 @@
     }
     return fragment;
   }
+  function renderNoteComposerPreview() {
+    const input = $('literatureNoteInput');
+    const preview = $('literatureNotePreview');
+    if (!input || !preview) return;
+    preview.textContent = '';
+    const source = input.value || '';
+    if (!source.trim()) {
+      preview.hidden = true;
+      return;
+    }
+    preview.hidden = false;
+    preview.append(markdownNoteFragment(source));
+  }
   async function importReaderNotes(file) {
     const status = $('literatureNoteImportStatus');
     const extension = file?.name?.split('.').pop()?.toLowerCase();
@@ -371,6 +384,7 @@
         input.value = note.text || '';
         input.focus();
         saveButton.textContent = '保存修改';
+        renderNoteComposerPreview();
       });
       const remove = document.createElement('button');
       remove.type = 'button';
@@ -406,6 +420,7 @@
     editingNoteId = '';
     input.value = '';
     button.textContent = '添加笔记';
+    renderNoteComposerPreview();
     renderReaderNotes();
   }
   function closePdfReader() {
@@ -426,11 +441,11 @@
     reader.id = 'literatureReader';
     reader.className = 'literature-reader';
     reader.hidden = true;
-    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地文献阅读器"></iframe></section><div id="literatureReaderDivider" class="literature-reader-divider" role="separator" aria-label="调整文献与笔记宽度" aria-orientation="vertical" tabindex="0"></div><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small id="literatureNoteImportStatus">与当前文献关联保存</small></div><label class="literature-note-import" title="导入 TXT 或 Markdown 笔记文件">导入笔记<input id="literatureNoteFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown"></label></div><div class="literature-note-composer"><textarea id="literatureNoteInput" rows="4" placeholder="写下阅读要点、方法、数据或疑问"></textarea><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
+    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地文献阅读器"></iframe></section><div id="literatureReaderDivider" class="literature-reader-divider" role="separator" aria-label="调整文献与笔记宽度" aria-orientation="vertical" tabindex="0"></div><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small id="literatureNoteImportStatus">与当前文献关联保存</small></div><label class="literature-note-import" title="导入 TXT 或 Markdown 笔记文件">导入笔记<input id="literatureNoteFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown"></label></div><div class="literature-note-composer"><textarea id="literatureNoteInput" rows="4" placeholder="写下阅读要点、方法、数据或疑问"></textarea><div id="literatureNotePreview" class="literature-note-preview" hidden></div><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
     if (!document.getElementById('literature-note-markdown-style')) {
       const style = document.createElement('style');
       style.id = 'literature-note-markdown-style';
-      style.textContent = '#literatureReader .literature-note-markdown{line-height:1.65;color:inherit;overflow-wrap:anywhere}#literatureReader .literature-note-markdown p{margin:0 0 .7em}#literatureReader .literature-note-markdown p:last-child{margin-bottom:0}#literatureReader .literature-note-markdown h1,#literatureReader .literature-note-markdown h2,#literatureReader .literature-note-markdown h3,#literatureReader .literature-note-markdown h4,#literatureReader .literature-note-markdown h5,#literatureReader .literature-note-markdown h6{margin:.15em 0 .5em;line-height:1.3;color:inherit}#literatureReader .literature-note-markdown h1{font-size:1.35em}#literatureReader .literature-note-markdown h2{font-size:1.2em}#literatureReader .literature-note-markdown h3{font-size:1.08em}#literatureReader .literature-note-markdown ul,#literatureReader .literature-note-markdown ol{margin:.35em 0 .75em;padding-left:1.5em}#literatureReader .literature-note-markdown li{margin:.2em 0}#literatureReader .literature-note-markdown blockquote{margin:.5em 0;padding:.45em .8em;border-left:3px solid currentColor;opacity:.8;background:rgba(127,127,127,.08)}#literatureReader .literature-note-markdown code{padding:.1em .35em;border-radius:4px;background:rgba(127,127,127,.14);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.92em}';
+      style.textContent = '#literatureReader .literature-note-markdown,#literatureReader .literature-note-preview{line-height:1.65;color:inherit;overflow-wrap:anywhere}#literatureReader .literature-note-markdown p,#literatureReader .literature-note-preview p{margin:0 0 .7em}#literatureReader .literature-note-markdown p:last-child,#literatureReader .literature-note-preview p:last-child{margin-bottom:0}#literatureReader .literature-note-markdown h1,#literatureReader .literature-note-markdown h2,#literatureReader .literature-note-markdown h3,#literatureReader .literature-note-markdown h4,#literatureReader .literature-note-markdown h5,#literatureReader .literature-note-markdown h6,#literatureReader .literature-note-preview h1,#literatureReader .literature-note-preview h2,#literatureReader .literature-note-preview h3,#literatureReader .literature-note-preview h4,#literatureReader .literature-note-preview h5,#literatureReader .literature-note-preview h6{margin:.15em 0 .5em;line-height:1.3;color:inherit}#literatureReader .literature-note-markdown h1,#literatureReader .literature-note-preview h1{font-size:1.35em}#literatureReader .literature-note-markdown h2,#literatureReader .literature-note-preview h2{font-size:1.2em}#literatureReader .literature-note-markdown h3,#literatureReader .literature-note-preview h3{font-size:1.08em}#literatureReader .literature-note-markdown ul,#literatureReader .literature-note-markdown ol,#literatureReader .literature-note-preview ul,#literatureReader .literature-note-preview ol{margin:.35em 0 .75em;padding-left:1.5em}#literatureReader .literature-note-markdown li,#literatureReader .literature-note-preview li{margin:.2em 0}#literatureReader .literature-note-markdown blockquote,#literatureReader .literature-note-preview blockquote{margin:.5em 0;padding:.45em .8em;border-left:3px solid currentColor;opacity:.8;background:rgba(127,127,127,.08)}#literatureReader .literature-note-markdown code,#literatureReader .literature-note-preview code{padding:.1em .35em;border-radius:4px;background:rgba(127,127,127,.14);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.92em}#literatureReader .literature-note-preview{margin:.55rem 0 .7rem;padding:.65rem .75rem;border:1px solid rgba(100,120,160,.22);border-radius:8px;background:rgba(100,120,160,.06)}';
       document.head.append(style);
     }
     document.body.append(reader);
@@ -488,6 +503,7 @@
       clearNotesDragState();
       await importReaderNotes(event.dataTransfer?.files?.[0]);
     });
+    $('literatureNoteInput').addEventListener('input', renderNoteComposerPreview);
     $('literatureNoteInput').addEventListener('keydown', event => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') saveReaderNote(); });
     document.addEventListener('keydown', event => { if (event.key === 'Escape') closePdfReader(); });
     document.addEventListener('click', event => { if (event.target.closest('.nav')) closePdfReader(); });
@@ -520,6 +536,7 @@
       workspace.style.setProperty('--literature-notes-width', `${Math.min(savedNotesWidth, maxWidth)}px`);
     }
     renderReaderNotes();
+    renderNoteComposerPreview();
   }
   async function importPdf(file) {
     if (!isSupportedFile(file)) { if (file) alert('暂不支持这种文件格式。'); return; }
