@@ -4,6 +4,7 @@
   const fileStore = 'pdfs';
   const $ = id => document.getElementById(id);
   let editingId = null;
+  let readerUrl = '';
 
   const read = () => {
     try {
@@ -80,12 +81,39 @@
     };
   }
   const setImportHint = text => { const hint = $('literatureImportHint'); if (hint) hint.textContent = text; };
+  function closePdfReader() {
+    const reader = $('literatureReader');
+    const frame = $('literatureReaderFrame');
+    if (!reader || reader.hidden) return;
+    reader.hidden = true;
+    if (frame) frame.removeAttribute('src');
+    if (readerUrl) URL.revokeObjectURL(readerUrl);
+    readerUrl = '';
+  }
+  function createPdfReader() {
+    let reader = $('literatureReader');
+    if (reader) return reader;
+    reader = document.createElement('section');
+    reader.id = 'literatureReader';
+    reader.className = 'literature-reader';
+    reader.hidden = true;
+    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" type="button">返回文献库</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器">×</button></header><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地 PDF 阅读器"></iframe>';
+    document.body.append(reader);
+    $('literatureReaderBack').addEventListener('click', closePdfReader);
+    $('literatureReaderClose').addEventListener('click', closePdfReader);
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') closePdfReader(); });
+    document.addEventListener('click', event => { if (event.target.closest('.nav')) closePdfReader(); });
+    return reader;
+  }
   async function openPdf(item) {
     const stored = await readPdf(item.id);
     if (!stored?.blob) { alert('该 PDF 只保存在添加它的设备上。请在本机重新拖入文件。'); return; }
-    const url = URL.createObjectURL(stored.blob);
-    window.open(url, '_blank', 'noopener');
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    closePdfReader();
+    const reader = createPdfReader();
+    readerUrl = URL.createObjectURL(stored.blob);
+    $('literatureReaderTitle').textContent = item.title || item.pdfName || '本地文献';
+    $('literatureReaderFrame').src = `${readerUrl}#view=FitH`;
+    reader.hidden = false;
   }
   async function importPdf(file) {
     if (!file || !(/\.pdf$/i.test(file.name) || file.type === 'application/pdf')) return;

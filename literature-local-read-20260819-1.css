@@ -1,2 +1,11 @@
 .literature-card-actions .literature-local-read{padding:6px 10px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;box-shadow:0 2px 7px color-mix(in srgb,var(--accent) 24%,transparent)}
 .literature-card-actions .literature-local-read:hover{background:color-mix(in srgb,var(--accent) 86%,#000);color:#fff}
+.literature-reader{position:fixed;z-index:1100;left:248px;right:0;top:0;bottom:0;display:grid;grid-template-rows:auto minmax(0,1fr);background:var(--bg);box-shadow:-14px 0 34px rgba(38,49,66,.14)}
+.literature-reader[hidden]{display:none}
+.literature-reader-bar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:16px;min-height:64px;padding:10px 20px;border-bottom:1px solid var(--line);background:var(--card)}
+.literature-reader-bar h2{min-width:0;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 17px/1.4 Georgia,"Songti SC",serif}
+.literature-reader-bar button{border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font-size:12px;cursor:pointer;padding:8px 11px}
+.literature-reader-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.literature-reader-bar .literature-reader-close{width:34px;height:34px;padding:0;border:0;background:transparent;color:var(--muted);font-size:26px;line-height:1}
+.literature-reader-frame{width:100%;height:100%;border:0;background:#525861}
+@media(max-width:800px){.literature-reader{left:0}.literature-reader-bar{gap:10px;padding:9px 12px}.literature-reader-bar h2{font-size:15px}.literature-reader-bar button:first-child{font-size:0;width:36px;height:34px;padding:0}.literature-reader-bar button:first-child::before{content:'←';font-size:21px}}
