@@ -2,6 +2,8 @@
   const storageKey = 'meike-literature-library-v1';
   const fileDbName = 'meike-literature-files-v1';
   const fileStore = 'pdfs';
+  const supportedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md', 'markdown', 'rtf', 'csv'];
+  const supportedAccept = supportedExtensions.map(ext => `.${ext}`).join(',');
   const $ = id => document.getElementById(id);
   let editingId = null;
   let readerUrl = '';
@@ -104,6 +106,16 @@
       document.head.append(style);
     }
     const head = document.querySelector('#literature .literature-head');
+    const importInput = $('literaturePdf');
+    const importBox = $('literatureImport');
+    if (importInput) importInput.accept = supportedAccept;
+    if (importBox) {
+      importBox.querySelector('.literature-import-icon')?.replaceChildren(document.createTextNode('文件'));
+      const strong = importBox.querySelector('strong');
+      if (strong) strong.textContent = '拖入 PDF、Word、PPT 等文件，自动添加到文献库';
+      const hint = importBox.querySelector('small');
+      if (hint) hint.textContent = '支持 PDF、Word、PPT、Excel、TXT、Markdown 等格式；可随时编辑文献信息';
+    }
     const addButton = $('newLiterature');
     if (head && addButton && !$('newLiteratureFolder')) {
       const actions = document.createElement('div');
@@ -117,7 +129,6 @@
       addButton.replaceWith(actions);
       actions.append(create, addButton);
     }
-    const importBox = $('literatureImport');
     if (importBox && !$('literatureFolders')) {
       const box = document.createElement('div');
       box.id = 'literatureFolders';
@@ -179,7 +190,9 @@
     const match = raw.match(new RegExp(`/${field}\\s*\\(([^]{0,1000}?)\\)`, 'i'));
     return cleanPdfString(match?.[1] || '');
   };
-  const filenameTitle = name => name.replace(/\.pdf$/i, '').replace(/[_.-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const filenameTitle = name => name.replace(/\.[^.]+$/i, '').replace(/[_.-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const extensionOf = name => String(name || '').split('.').pop()?.toLowerCase() || '';
+  const isSupportedFile = file => Boolean(file && (supportedExtensions.includes(extensionOf(file.name)) || file.type === 'application/pdf'));
   async function identifyPdf(file) {
     const raw = new TextDecoder('latin1').decode(await file.arrayBuffer());
     const doi = raw.match(/10\.\d{4,9}\/[\w.()/:;-]+/i)?.[0]?.replace(/[).,;]+$/, '') || '';
@@ -319,7 +332,7 @@
     reader.id = 'literatureReader';
     reader.className = 'literature-reader';
     reader.hidden = true;
-    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地 PDF 阅读器"></iframe></section><div id="literatureReaderDivider" class="literature-reader-divider" role="separator" aria-label="调整文献与笔记宽度" aria-orientation="vertical" tabindex="0"></div><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small id="literatureNoteImportStatus">与当前文献关联保存</small></div><label class="literature-note-import" title="导入 TXT 或 Markdown 笔记文件">导入笔记<input id="literatureNoteFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown"></label></div><div class="literature-note-composer"><textarea id="literatureNoteInput" rows="4" placeholder="写下阅读要点、方法、数据或疑问"></textarea><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
+    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地文献阅读器"></iframe></section><div id="literatureReaderDivider" class="literature-reader-divider" role="separator" aria-label="调整文献与笔记宽度" aria-orientation="vertical" tabindex="0"></div><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small id="literatureNoteImportStatus">与当前文献关联保存</small></div><label class="literature-note-import" title="导入 TXT 或 Markdown 笔记文件">导入笔记<input id="literatureNoteFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown"></label></div><div class="literature-note-composer"><textarea id="literatureNoteInput" rows="4" placeholder="写下阅读要点、方法、数据或疑问"></textarea><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
     document.body.append(reader);
     $('literatureReaderBack').addEventListener('click', closePdfReader);
     $('literatureReaderClose').addEventListener('click', closePdfReader);
@@ -382,14 +395,14 @@
   }
   async function openPdf(item) {
     const stored = await readPdf(item.id);
-    if (!stored?.blob) { alert('该 PDF 只保存在添加它的设备上。请在本机重新拖入文件。'); return; }
+    if (!stored?.blob) { alert('该文件只保存在添加它的设备上。请在本机重新拖入文件。'); return; }
     closePdfReader();
     const reader = createPdfReader();
     readerUrl = URL.createObjectURL(stored.blob);
     readingId = item.id;
     editingNoteId = '';
     $('literatureReaderTitle').textContent = item.title || item.pdfName || '本地文献';
-    $('literatureReaderFrame').src = `${readerUrl}#view=FitH`;
+    $('literatureReaderFrame').src = extensionOf(item.pdfName) === 'pdf' ? `${readerUrl}#view=FitH` : readerUrl;
     reader.hidden = false;
     const savedNotesWidth = Number(localStorage.getItem('meike-literature-notes-width'));
     if (savedNotesWidth >= 260) {
@@ -400,18 +413,19 @@
     renderReaderNotes();
   }
   async function importPdf(file) {
-    if (!file || !(/\.pdf$/i.test(file.name) || file.type === 'application/pdf')) return;
-    if (file.size > 50 * 1024 * 1024) { alert('单篇 PDF 请控制在 50MB 以内。'); return; }
-    setImportHint('正在识别 PDF 信息…');
+    if (!isSupportedFile(file)) { if (file) alert('暂不支持这种文件格式。'); return; }
+    if (file.size > 50 * 1024 * 1024) { alert('单个文件请控制在 50MB 以内。'); return; }
+    const isPdf = extensionOf(file.name) === 'pdf' || file.type === 'application/pdf';
+    setImportHint(isPdf ? '正在识别 PDF 信息…' : '正在添加文件…');
     try {
-      const info = await identifyPdf(file);
+      const info = isPdf ? await identifyPdf(file) : { title: filenameTitle(file.name), authors: '', year: '', url: '', source: '', tags: '', note: '' };
       const id = `literature-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       await savePdf({ id, name: file.name, size: file.size, type: file.type, addedAt: Date.now(), blob: file });
       save([{ id, ...info, folderId: activeFolderId === 'all' ? '' : activeFolderId, status: 'unread', pdfName: file.name, pdfSize: file.size, createdAt: stamp(), updatedAt: stamp() }, ...read()]);
       setImportHint(`已添加《${info.title}》，识别信息可随时编辑`);
       render();
     } catch {
-      setImportHint('已添加 PDF；未能识别的信息可在“编辑”中补充');
+      setImportHint('已添加文件；未能识别的信息可在“编辑”中补充');
       const id = `literature-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       await savePdf({ id, name: file.name, size: file.size, type: file.type, addedAt: Date.now(), blob: file });
       save([{ id, title: filenameTitle(file.name), authors: '', year: '', source: '', url: '', status: 'unread', tags: '', note: '', folderId: activeFolderId === 'all' ? '' : activeFolderId, pdfName: file.name, pdfSize: file.size, createdAt: stamp(), updatedAt: stamp() }, ...read()]);
@@ -522,7 +536,7 @@
         file.className = 'literature-card-file';
         const open = document.createElement('button');
         open.type = 'button';
-        open.textContent = `PDF · ${item.pdfName}${item.pdfSize ? ` (${formatSize(item.pdfSize)})` : ''}`;
+        open.textContent = `${extensionOf(item.pdfName).toUpperCase() || '文件'} · ${item.pdfName}${item.pdfSize ? ` (${formatSize(item.pdfSize)})` : ''}`;
         open.addEventListener('click', () => openPdf(item));
         file.append(open);
         content.append(file);
