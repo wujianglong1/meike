@@ -205,11 +205,37 @@
     reader.id = 'literatureReader';
     reader.className = 'literature-reader';
     reader.hidden = true;
-    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地 PDF 阅读器"></iframe></section><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small id="literatureNoteImportStatus">与当前文献关联保存</small></div><label class="literature-note-import" title="导入 TXT 或 Markdown 笔记文件">导入笔记<input id="literatureNoteFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown"></label></div><div class="literature-note-composer"><textarea id="literatureNoteInput" rows="4" placeholder="写下阅读要点、方法、数据或疑问"></textarea><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
+    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地 PDF 阅读器"></iframe></section><div id="literatureReaderDivider" class="literature-reader-divider" role="separator" aria-label="调整文献与笔记宽度" aria-orientation="vertical" tabindex="0"></div><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small id="literatureNoteImportStatus">与当前文献关联保存</small></div><label class="literature-note-import" title="导入 TXT 或 Markdown 笔记文件">导入笔记<input id="literatureNoteFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown"></label></div><div class="literature-note-composer"><textarea id="literatureNoteInput" rows="4" placeholder="写下阅读要点、方法、数据或疑问"></textarea><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
     document.body.append(reader);
     $('literatureReaderBack').addEventListener('click', closePdfReader);
     $('literatureReaderClose').addEventListener('click', closePdfReader);
     $('literatureNoteSave').addEventListener('click', saveReaderNote);
+    const workspace = reader.querySelector('.literature-reader-workspace');
+    const divider = $('literatureReaderDivider');
+    const savedNotesWidth = Number(localStorage.getItem('meike-literature-notes-width'));
+    if (savedNotesWidth >= 260) workspace.style.setProperty('--literature-notes-width', `${savedNotesWidth}px`);
+    divider.addEventListener('pointerdown', event => {
+      const startX = event.clientX;
+      const startWidth = reader.querySelector('.literature-notes').getBoundingClientRect().width;
+      divider.setPointerCapture(event.pointerId);
+      reader.classList.add('is-resizing');
+      const move = moveEvent => {
+        const maxWidth = Math.max(260, Math.min(620, workspace.clientWidth - 330));
+        const nextWidth = Math.round(Math.max(260, Math.min(maxWidth, startWidth - (moveEvent.clientX - startX))));
+        workspace.style.setProperty('--literature-notes-width', `${nextWidth}px`);
+      };
+      const finish = finishEvent => {
+        divider.releasePointerCapture(finishEvent.pointerId);
+        reader.classList.remove('is-resizing');
+        localStorage.setItem('meike-literature-notes-width', String(Math.round(reader.querySelector('.literature-notes').getBoundingClientRect().width)));
+        divider.removeEventListener('pointermove', move);
+        divider.removeEventListener('pointerup', finish);
+        divider.removeEventListener('pointercancel', finish);
+      };
+      divider.addEventListener('pointermove', move);
+      divider.addEventListener('pointerup', finish);
+      divider.addEventListener('pointercancel', finish);
+    });
     $('literatureNoteFile').addEventListener('change', async event => {
       await importReaderNotes(event.target.files?.[0]);
       event.target.value = '';
@@ -251,6 +277,12 @@
     $('literatureReaderTitle').textContent = item.title || item.pdfName || '本地文献';
     $('literatureReaderFrame').src = `${readerUrl}#view=FitH`;
     reader.hidden = false;
+    const savedNotesWidth = Number(localStorage.getItem('meike-literature-notes-width'));
+    if (savedNotesWidth >= 260) {
+      const workspace = reader.querySelector('.literature-reader-workspace');
+      const maxWidth = Math.max(260, Math.min(620, workspace.clientWidth - 330));
+      workspace.style.setProperty('--literature-notes-width', `${Math.min(savedNotesWidth, maxWidth)}px`);
+    }
     renderReaderNotes();
   }
   async function importPdf(file) {
