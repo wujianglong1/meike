@@ -345,6 +345,20 @@
       return element;
     };
     template.content.childNodes.forEach(node => holder.append(clean(node)));
+    holder.querySelectorAll('strong,em').forEach(element => {
+      if (element.textContent.trim().length <= 56 || element.querySelector('strong,em')) return;
+      const parent = element.parentNode;
+      while (element.firstChild) parent.insertBefore(element.firstChild, element);
+      element.remove();
+    });
+    holder.querySelectorAll('p').forEach(paragraph => {
+      const value = paragraph.textContent.trim();
+      const level = /^(?:第?[一二三四五六七八九十]+[、.．]|\d+[.、．])\s*\S/.test(value) && value.length <= 60 ? 2 : (/^\([0-9一二三四五六七八九十]+\)\s*\S/.test(value) && value.length <= 72 ? 3 : 0);
+      if (!level) return;
+      const heading = document.createElement(`h${level}`);
+      while (paragraph.firstChild) heading.append(paragraph.firstChild);
+      paragraph.replaceWith(heading);
+    });
     return holder.innerHTML;
   }
   function noteHtmlFragment(source) {
