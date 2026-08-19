@@ -10,6 +10,7 @@
   let readingId = '';
   let editingNoteId = '';
   let activeFolderId = localStorage.getItem('meike-literature-active-folder') || 'all';
+  let sortMode = localStorage.getItem('meike-literature-sort') || 'updated-desc';
 
   const read = () => {
     try {
@@ -132,6 +133,22 @@
       addButton.replaceWith(actions);
       actions.append(create, addButton);
     }
+    const toolbar = $('literatureSearch')?.closest('.literature-toolbar');
+    if (toolbar && !$('literatureSort')) {
+      const sort = document.createElement('select');
+      sort.id = 'literatureSort';
+      sort.className = 'literature-sort';
+      sort.setAttribute('aria-label', '文献排序');
+      [['updated-desc', '最近更新'], ['title-asc', '标题 A-Z'], ['year-desc', '年份从新到旧'], ['type-asc', '文件类型']].forEach(([value, label]) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        sort.append(option);
+      });
+      sort.value = sortMode;
+      sort.addEventListener('change', () => { sortMode = sort.value; localStorage.setItem('meike-literature-sort', sortMode); render(); });
+      toolbar.append(sort);
+    }
     if (importBox && !$('literatureFolders')) {
       const box = document.createElement('div');
       box.id = 'literatureFolders';
@@ -150,6 +167,12 @@
   }
   const stamp = () => new Date().toISOString();
   const statusText = value => ({ unread: '未读', reading: '在读', read: '已读' }[value] || '未读');
+  const sortRecords = records => [...records].sort((a, b) => {
+    if (sortMode === 'title-asc') return String(a.title || '').localeCompare(String(b.title || ''), 'zh-CN');
+    if (sortMode === 'year-desc') return Number(b.year || 0) - Number(a.year || 0) || String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''));
+    if (sortMode === 'type-asc') return extensionOf(a.pdfName).localeCompare(extensionOf(b.pdfName)) || String(a.title || '').localeCompare(String(b.title || ''), 'zh-CN');
+    return String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || ''));
+  });
   const normaliseUrl = value => {
     const text = value.trim();
     if (!text) return '';
@@ -470,7 +493,7 @@
   function render() {
     const list = $('literatureList');
     if (!list) return;
-    const all = papers(read()).sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
+    const all = sortRecords(papers(read()));
     const query = ($('literatureSearch')?.value || '').trim().toLowerCase();
     const filter = $('literatureStatusFilter')?.value || 'all';
     const records = all.filter(item => {
