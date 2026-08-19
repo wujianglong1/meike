@@ -108,7 +108,10 @@
     const head = document.querySelector('#literature .literature-head');
     const importInput = $('literaturePdf');
     const importBox = $('literatureImport');
-    if (importInput) importInput.accept = supportedAccept;
+    if (importInput) {
+      importInput.accept = supportedAccept;
+      importInput.multiple = true;
+    }
     if (importBox) {
       importBox.querySelector('.literature-import-icon')?.replaceChildren(document.createTextNode('文件'));
       const strong = importBox.querySelector('strong');
@@ -193,6 +196,11 @@
   const filenameTitle = name => name.replace(/\.[^.]+$/i, '').replace(/[_.-]+/g, ' ').replace(/\s+/g, ' ').trim();
   const extensionOf = name => String(name || '').split('.').pop()?.toLowerCase() || '';
   const isSupportedFile = file => Boolean(file && (supportedExtensions.includes(extensionOf(file.name)) || file.type === 'application/pdf'));
+  const filesFromDrop = event => {
+    const files = Array.from(event.dataTransfer?.files || []);
+    if (files.length) return files;
+    return Array.from(event.dataTransfer?.items || []).map(item => item.kind === 'file' ? item.getAsFile() : null).filter(Boolean);
+  };
   async function identifyPdf(file) {
     const raw = new TextDecoder('latin1').decode(await file.arrayBuffer());
     const doi = raw.match(/10\.\d{4,9}\/[\w.()/:;-]+/i)?.[0]?.replace(/[).,;]+$/, '') || '';
@@ -677,10 +685,10 @@
   $('saveLiterature')?.addEventListener('click', saveEditor);
   $('literatureSearch')?.addEventListener('input', render);
   $('literatureStatusFilter')?.addEventListener('change', render);
-  $('literaturePdf')?.addEventListener('change', event => { const file = event.target.files?.[0]; event.target.value = ''; importPdf(file); });
+  $('literaturePdf')?.addEventListener('change', async event => { const files = Array.from(event.target.files || []); event.target.value = ''; for (const file of files) await importPdf(file); });
   ['dragenter', 'dragover'].forEach(type => $('literatureImport')?.addEventListener(type, event => { event.preventDefault(); $('literatureImport').classList.add('is-dragging'); }));
   ['dragleave', 'drop'].forEach(type => $('literatureImport')?.addEventListener(type, event => { event.preventDefault(); $('literatureImport').classList.remove('is-dragging'); }));
-  $('literatureImport')?.addEventListener('drop', event => importPdf(event.dataTransfer?.files?.[0]));
+  $('literatureImport')?.addEventListener('drop', async event => { for (const file of filesFromDrop(event)) await importPdf(file); });
   $('literatureEditor')?.addEventListener('keydown', event => {
     if (event.key === 'Escape') closeEditor();
     if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') saveEditor();
