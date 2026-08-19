@@ -134,20 +134,27 @@
       actions.append(create, addButton);
     }
     const toolbar = $('literatureSearch')?.closest('.literature-toolbar');
-    if (toolbar && !$('literatureSort')) {
-      const sort = document.createElement('select');
-      sort.id = 'literatureSort';
-      sort.className = 'literature-sort';
-      sort.setAttribute('aria-label', '文献排序');
-      [['updated-desc', '最近更新'], ['title-asc', '标题 A-Z'], ['year-desc', '年份从新到旧'], ['type-asc', '文件类型']].forEach(([value, label]) => {
-        const option = document.createElement('option');
-        option.value = value;
-        option.textContent = label;
-        sort.append(option);
-      });
+    if (toolbar) {
+      const sort = $('literatureSort') || document.createElement('select');
+      if (!sort.id) {
+        sort.id = 'literatureSort';
+        sort.className = 'literature-sort';
+        sort.setAttribute('aria-label', '文献排序');
+      }
+      if (!sort.options.length) {
+        [['updated-desc', '最近更新'], ['title-asc', '标题 A-Z'], ['year-desc', '年份从新到旧'], ['type-asc', '文件类型']].forEach(([value, label]) => {
+          const option = document.createElement('option');
+          option.value = value;
+          option.textContent = label;
+          sort.append(option);
+        });
+      }
+      if (!sort.parentElement) toolbar.append(sort);
       sort.value = sortMode;
-      sort.addEventListener('change', () => { sortMode = sort.value; localStorage.setItem('meike-literature-sort', sortMode); render(); });
-      toolbar.append(sort);
+      if (sort.dataset.bound !== 'true') {
+        sort.dataset.bound = 'true';
+        sort.addEventListener('change', () => { sortMode = sort.value; localStorage.setItem('meike-literature-sort', sortMode); render(); });
+      }
     }
     if (importBox && !$('literatureFolders')) {
       const box = document.createElement('div');
