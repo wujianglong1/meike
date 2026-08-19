@@ -7,6 +7,7 @@
   let readerUrl = '';
   let readingId = '';
   let editingNoteId = '';
+  let activeFolderId = localStorage.getItem('meike-literature-active-folder') || 'all';
 
   const read = () => {
     try {
@@ -20,6 +21,119 @@
     localStorage.setItem(storageKey, JSON.stringify(records));
     window.dispatchEvent(new Event('meike-local-data-changed'));
   };
+  const isFolder = item => item?.kind === 'folder';
+  const folders = () => read().filter(isFolder).sort((a, b) => String(a.name).localeCompare(String(b.name), 'zh-CN'));
+  const papers = records => records.filter(item => !isFolder(item));
+  const folderName = id => folders().find(folder => folder.id === id)?.name || '';
+  function renderFolders() {
+    const box = $('literatureFolders');
+    if (!box) return;
+    const records = read();
+    const paperRecords = papers(records);
+    const list = [{ id: 'all', name: '全部文献', count: paperRecords.length }, ...folders().map(folder => ({ ...folder, count: paperRecords.filter(item => item.folderId === folder.id).length }))];
+    if (!list.some(folder => folder.id === activeFolderId)) {
+      activeFolderId = 'all';
+      localStorage.setItem('meike-literature-active-folder', activeFolderId);
+    }
+    box.textContent = '';
+    list.forEach(folder => {
+      const chip = document.createElement('div');
+      chip.className = `literature-folder-chip${folder.id === activeFolderId ? ' is-active' : ''}`;
+      const select = document.createElement('button');
+      select.type = 'button';
+      select.className = 'literature-folder-select';
+      const icon = document.createElement('span');
+      icon.className = 'literature-folder-icon';
+      icon.textContent = folder.id === 'all' ? '▦' : '▰';
+      const name = document.createElement('span');
+      name.textContent = folder.name;
+      const count = document.createElement('b');
+      count.textContent = folder.count;
+      select.append(icon, name, count);
+      select.addEventListener('click', () => { activeFolderId = folder.id; localStorage.setItem('meike-literature-active-folder', activeFolderId); render(); });
+      chip.append(select);
+      if (folder.id !== 'all') {
+        const actions = document.createElement('div');
+        actions.className = 'literature-folder-actions';
+        const rename = document.createElement('button');
+        rename.type = 'button';
+        rename.textContent = '重命名';
+        rename.addEventListener('click', () => renameFolder(folder));
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.textContent = '删除';
+        remove.addEventListener('click', () => removeFolder(folder));
+        actions.append(rename, remove);
+        chip.append(actions);
+      }
+      box.append(chip);
+    });
+  }
+  function createFolder() {
+    const name = prompt('请输入文件夹名称');
+    const trimmed = name?.trim();
+    if (!trimmed) return;
+    if (folders().some(folder => folder.name === trimmed)) return alert('这个文件夹已经存在。');
+    const now = stamp();
+    const folder = { id: `folder-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, kind: 'folder', name: trimmed, createdAt: now, updatedAt: now };
+    save([...read(), folder]);
+    activeFolderId = folder.id;
+    localStorage.setItem('meike-literature-active-folder', activeFolderId);
+    render();
+  }
+  function renameFolder(folder) {
+    const name = prompt('修改文件夹名称', folder.name);
+    const trimmed = name?.trim();
+    if (!trimmed || trimmed === folder.name) return;
+    if (folders().some(item => item.id !== folder.id && item.name === trimmed)) return alert('这个文件夹已经存在。');
+    save(read().map(item => item.id === folder.id ? { ...item, name: trimmed, updatedAt: stamp() } : item));
+    render();
+  }
+  function removeFolder(folder) {
+    if (!confirm(`删除文件夹“${folder.name}”？其中的文献会保留在“全部文献”中。`)) return;
+    save(read().filter(item => item.id !== folder.id).map(item => item.folderId === folder.id ? { ...item, folderId: '' } : item));
+    if (activeFolderId === folder.id) activeFolderId = 'all';
+    localStorage.setItem('meike-literature-active-folder', activeFolderId);
+    render();
+  }
+  function ensureFolderUi() {
+    if (!document.getElementById('literature-folder-style')) {
+      const style = document.createElement('style');
+      style.id = 'literature-folder-style';
+      style.textContent = `.literature-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.literature-folder-create{border:1px solid var(--line)!important;background:transparent!important;color:var(--accent)!important}.literature-folder-create:hover{background:color-mix(in srgb,var(--accent) 8%,var(--card))!important}.literature-folders{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}.literature-folder-chip{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;background:var(--card);overflow:hidden}.literature-folder-chip.is-active{border-color:color-mix(in srgb,var(--accent) 55%,var(--line));background:color-mix(in srgb,var(--accent) 9%,var(--card))}.literature-folder-select{display:flex;align-items:center;gap:7px;border:0;background:transparent;color:var(--ink);padding:8px 10px;cursor:pointer}.literature-folder-select b{min-width:1.2em;color:var(--muted);font-size:11px}.literature-folder-icon{color:var(--accent);font-size:14px}.literature-folder-actions{display:none;align-items:center;gap:3px;padding-right:5px}.literature-folder-chip:hover .literature-folder-actions,.literature-folder-chip:focus-within .literature-folder-actions{display:flex}.literature-folder-actions button{border:0;background:transparent;color:var(--muted);font-size:11px;padding:3px;cursor:pointer}.literature-folder-actions button:hover{color:var(--accent)}#literatureFolder{min-width:0}@media(max-width:700px){.literature-head-actions{width:100%}.literature-head-actions button{flex:1}}`;
+      document.head.append(style);
+    }
+    const head = document.querySelector('#literature .literature-head');
+    const addButton = $('newLiterature');
+    if (head && addButton && !$('newLiteratureFolder')) {
+      const actions = document.createElement('div');
+      actions.className = 'literature-head-actions';
+      const create = document.createElement('button');
+      create.id = 'newLiteratureFolder';
+      create.className = 'literature-folder-create';
+      create.type = 'button';
+      create.textContent = '＋ 新建文件夹';
+      create.addEventListener('click', createFolder);
+      addButton.replaceWith(actions);
+      actions.append(create, addButton);
+    }
+    const importBox = $('literatureImport');
+    if (importBox && !$('literatureFolders')) {
+      const box = document.createElement('div');
+      box.id = 'literatureFolders';
+      box.className = 'literature-folders';
+      box.setAttribute('aria-label', '文献文件夹');
+      importBox.insertAdjacentElement('afterend', box);
+    }
+    const status = $('literatureStatus');
+    if (status && !$('literatureFolder')) {
+      const select = document.createElement('select');
+      select.id = 'literatureFolder';
+      select.setAttribute('aria-label', '归入文件夹');
+      select.innerHTML = '<option value="">不归入文件夹</option>';
+      status.insertAdjacentElement('afterend', select);
+    }
+  }
   const stamp = () => new Date().toISOString();
   const statusText = value => ({ unread: '未读', reading: '在读', read: '已读' }[value] || '未读');
   const normaliseUrl = value => {
@@ -293,14 +407,14 @@
       const info = await identifyPdf(file);
       const id = `literature-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       await savePdf({ id, name: file.name, size: file.size, type: file.type, addedAt: Date.now(), blob: file });
-      save([{ id, ...info, status: 'unread', pdfName: file.name, pdfSize: file.size, createdAt: stamp(), updatedAt: stamp() }, ...read()]);
+      save([{ id, ...info, folderId: activeFolderId === 'all' ? '' : activeFolderId, status: 'unread', pdfName: file.name, pdfSize: file.size, createdAt: stamp(), updatedAt: stamp() }, ...read()]);
       setImportHint(`已添加《${info.title}》，识别信息可随时编辑`);
       render();
     } catch {
       setImportHint('已添加 PDF；未能识别的信息可在“编辑”中补充');
       const id = `literature-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       await savePdf({ id, name: file.name, size: file.size, type: file.type, addedAt: Date.now(), blob: file });
-      save([{ id, title: filenameTitle(file.name), authors: '', year: '', source: '', url: '', status: 'unread', tags: '', note: '', pdfName: file.name, pdfSize: file.size, createdAt: stamp(), updatedAt: stamp() }, ...read()]);
+      save([{ id, title: filenameTitle(file.name), authors: '', year: '', source: '', url: '', status: 'unread', tags: '', note: '', folderId: activeFolderId === 'all' ? '' : activeFolderId, pdfName: file.name, pdfSize: file.size, createdAt: stamp(), updatedAt: stamp() }, ...read()]);
       render();
     }
   }
@@ -334,13 +448,14 @@
   function render() {
     const list = $('literatureList');
     if (!list) return;
-    const all = read().sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
+    const all = papers(read()).sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
     const query = ($('literatureSearch')?.value || '').trim().toLowerCase();
     const filter = $('literatureStatusFilter')?.value || 'all';
     const records = all.filter(item => {
       const text = [item.title, item.authors, item.year, item.source, item.tags, item.note].join(' ').toLowerCase();
-      return (!query || text.includes(query)) && (filter === 'all' || item.status === filter);
+      return (!query || text.includes(query)) && (filter === 'all' || item.status === filter) && (activeFolderId === 'all' || item.folderId === activeFolderId);
     });
+    renderFolders();
     summary(all);
     list.textContent = '';
     if (!records.length) {
@@ -401,6 +516,7 @@
         note.textContent = item.note;
         content.append(note);
       }
+      if (item.folderId && folderName(item.folderId)) content.append(makeMeta(`文件夹：${folderName(item.folderId)}`, 'literature-folder-meta'));
       if (item.pdfName) {
         const file = document.createElement('div');
         file.className = 'literature-card-file';
@@ -465,6 +581,21 @@
     setText('literatureTags', item?.tags);
     setText('literatureNote', item?.note);
     $('literatureStatus').value = item?.status || 'unread';
+    const folderSelect = $('literatureFolder');
+    if (folderSelect) {
+      folderSelect.textContent = '';
+      const emptyOption = document.createElement('option');
+      emptyOption.value = '';
+      emptyOption.textContent = '不归入文件夹';
+      folderSelect.append(emptyOption);
+      folders().forEach(folder => {
+        const option = document.createElement('option');
+        option.value = folder.id;
+        option.textContent = folder.name;
+        folderSelect.append(option);
+      });
+      folderSelect.value = item?.folderId || (activeFolderId === 'all' ? '' : activeFolderId);
+    }
     $('literatureTitle').focus();
     $('literatureEditor').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
@@ -502,6 +633,8 @@
       status: $('literatureStatus').value,
       tags: $('literatureTags').value.trim(),
       note: $('literatureNote').value.trim(),
+      notes: old?.notes || [],
+      folderId: $('literatureFolder')?.value || '',
       pdfName: old?.pdfName || '',
       pdfSize: old?.pdfSize || 0,
       createdAt: old?.createdAt || stamp(),
@@ -524,6 +657,7 @@
     };
   }
 
+  ensureFolderUi();
   $('newLiterature')?.addEventListener('click', () => openEditor());
   $('cancelLiterature')?.addEventListener('click', closeEditor);
   $('saveLiterature')?.addEventListener('click', saveEditor);
