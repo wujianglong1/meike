@@ -26,6 +26,7 @@
 <button class="nav" data-view="secret">⌁　秘密簿</button>
 <button class="nav" data-view="links">↗　网址簿</button>
 <button class="nav" data-view="bookshelf">▤　书架</button>
+<button class="nav" data-view="literature">⌑　文献库</button>
 <button class="nav" data-view="history">▦　足迹</button>
 <button class="nav" data-view="styles">✦　外观</button>
 </nav>
@@ -247,6 +248,16 @@
 <div id="bookList" class="book-list"></div>
 <article class="card document-shelf"><div class="heading"><div><em>文档库</em><h2>常用文档</h2><p class="document-subtitle">把需要反复查看的 Word、PPT、PDF 和表格集中放在这里。</p></div><label class="document-add"><span>＋ 添加文档</span><input id="documentFile" type="file" accept=".doc,.docx,.ppt,.pptx,.pdf,.xls,.xlsx,.txt,.md,.rtf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain"></label></div><div id="documentList" class="document-list"></div></article>
 </section>
+<section id="literature" class="view">
+<div class="literature-head"><div><p class="intro">把每一次阅读，慢慢沉淀成自己的研究脉络。</p><h2>文献库</h2></div><button id="newLiterature" type="button">＋ 添加文献</button></div>
+<div class="literature-toolbar"><label class="literature-search"><span>⌕</span><input id="literatureSearch" type="search" placeholder="搜索标题、作者、标签或笔记"></label><select id="literatureStatusFilter" aria-label="筛选阅读状态"><option value="all">全部状态</option><option value="unread">未读</option><option value="reading">在读</option><option value="read">已读</option></select></div>
+<article id="literatureEditor" class="card literature-editor" hidden>
+<div class="heading"><div><em id="literatureEditorEyebrow">加入文献库</em><h2 id="literatureEditorTitle">添加一篇文献</h2></div><button id="cancelLiterature" class="literature-editor-close" type="button" aria-label="取消编辑">×</button></div>
+<div class="literature-form"><input id="literatureTitle" maxlength="180" placeholder="文献标题 *"><input id="literatureAuthors" maxlength="160" placeholder="作者（可选）"><input id="literatureYear" inputmode="numeric" maxlength="4" placeholder="年份，例如 2026"><select id="literatureStatus" aria-label="阅读状态"><option value="unread">未读</option><option value="reading">在读</option><option value="read">已读</option></select><input id="literatureSource" maxlength="120" placeholder="期刊、会议或出版社（可选）"><input id="literatureUrl" type="url" placeholder="DOI 或在线链接（可选）"><input id="literatureTags" class="literature-form-wide" maxlength="120" placeholder="标签，例如：亚麻、抗皱、绿色整理（用逗号分隔）"><textarea id="literatureNote" class="literature-form-wide" rows="5" maxlength="3000" placeholder="阅读笔记、关键结论或后续想验证的问题……"></textarea><div class="literature-form-actions literature-form-wide"><button id="saveLiterature" type="button">保存文献</button></div></div>
+</article>
+<div id="literatureSummary" class="literature-summary" aria-live="polite"></div>
+<div id="literatureList" class="literature-list"></div>
+</section>
 <section id="life" class="view">
 <div class="life-head">
 <div><p class="intro">留住照片，也留住当时想说的话。</p><h2>生活记录</h2></div>
@@ -404,6 +415,7 @@ document.getElementById('habitName').addEventListener('keydown',function(e){if(e
 <script src="link-title-20260817-1.js"></script>
 <script src="bookshelf-20260818-1.js"></script>
 <script src="document-shelf-20260818-1.js"></script>
+<script src="literature-library-20260819-1.js"></script>
 </body>
 </html>
 
