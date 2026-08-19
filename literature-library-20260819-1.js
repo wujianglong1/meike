@@ -170,10 +170,10 @@
       });
       const content = document.createElement('div');
       content.className = 'literature-card-content';
-      const title = document.createElement(item.url ? 'a' : 'h3');
+      const title = document.createElement(item.url && !item.pdfName ? 'a' : 'h3');
       title.className = 'literature-title';
       title.textContent = item.title;
-      if (item.url) {
+      if (item.url && !item.pdfName) {
         title.href = item.url;
         title.target = '_blank';
         title.rel = 'noopener';
@@ -216,12 +216,20 @@
       main.append(marker, content);
       const actions = document.createElement('div');
       actions.className = 'literature-card-actions';
+      if (item.pdfName) {
+        const localRead = document.createElement('button');
+        localRead.type = 'button';
+        localRead.className = 'literature-local-read';
+        localRead.textContent = '本地阅读';
+        localRead.addEventListener('click', () => openPdf(item));
+        actions.append(localRead);
+      }
       if (item.url) {
         const open = document.createElement('a');
         open.href = item.url;
         open.target = '_blank';
         open.rel = 'noopener';
-        open.textContent = '打开 ↗';
+        open.textContent = item.pdfName ? '文献网页 ↗' : '打开 ↗';
         actions.append(open);
       }
       const edit = document.createElement('button');

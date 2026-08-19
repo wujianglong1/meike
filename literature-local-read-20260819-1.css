@@ -1,0 +1,2 @@
+.literature-card-actions .literature-local-read{padding:6px 10px;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;box-shadow:0 2px 7px color-mix(in srgb,var(--accent) 24%,transparent)}
+.literature-card-actions .literature-local-read:hover{background:color-mix(in srgb,var(--accent) 86%,#000);color:#fff}
