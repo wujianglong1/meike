@@ -260,6 +260,61 @@
     const clean = String(text || '').replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n').trim();
     return clean.split(/\n\s*\n+/).map(part => part.trim()).filter(Boolean).slice(0, 200);
   }
+  function escapeNoteHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+  }
+  function inlineNoteMarkdown(value) {
+    let html = escapeNoteHtml(value);
+    html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+    html = html.replace(/\*\*([^*\n]+)\*\*|__([^_\n]+)__/g, (_, boldA, boldB) => `<strong>${boldA || boldB}</strong>`);
+    html = html.replace(/\*([^*\n]+)\*|_([^_\n]+)_/g, (_, italicA, italicB) => `<em>${italicA || italicB}</em>`);
+    return html.replace(/ {2}\n/g, '<br>');
+  }
+  function markdownNoteFragment(source) {
+    const fragment = document.createDocumentFragment();
+    const lines = String(source || '').replace(/\r\n?/g, '\n').split('\n');
+    const isBlockStart = line => /^(#{1,6})\s+/.test(line) || /^\s*>/.test(line) || /^\s*[-+*]\s+/.test(line) || /^\s*\d+[.)]\s+/.test(line);
+    const append = (tag, html, className) => {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      element.innerHTML = html;
+      fragment.append(element);
+    };
+    let index = 0;
+    while (index < lines.length) {
+      if (!lines[index].trim()) { index += 1; continue; }
+      const line = lines[index];
+      const heading = line.match(/^(#{1,6})\s+(.+)$/);
+      if (heading) {
+        append(`h${heading[1].length}`, inlineNoteMarkdown(heading[2]));
+        index += 1;
+        continue;
+      }
+      if (/^\s*>/.test(line)) {
+        const quote = [];
+        while (index < lines.length && /^\s*>/.test(lines[index])) { quote.push(lines[index].replace(/^\s*>\s?/, '')); index += 1; }
+        append('blockquote', quote.map(inlineNoteMarkdown).join('<br>'));
+        continue;
+      }
+      if (/^\s*[-+*]\s+/.test(line)) {
+        const items = [];
+        while (index < lines.length && /^\s*[-+*]\s+/.test(lines[index])) { items.push(lines[index].replace(/^\s*[-+*]\s+/, '')); index += 1; }
+        append('ul', items.map(item => `<li>${inlineNoteMarkdown(item)}</li>`).join(''));
+        continue;
+      }
+      if (/^\s*\d+[.)]\s+/.test(line)) {
+        const items = [];
+        while (index < lines.length && /^\s*\d+[.)]\s+/.test(lines[index])) { items.push(lines[index].replace(/^\s*\d+[.)]\s+/, '')); index += 1; }
+        append('ol', items.map(item => `<li>${inlineNoteMarkdown(item)}</li>`).join(''));
+        continue;
+      }
+      const paragraph = [line];
+      index += 1;
+      while (index < lines.length && lines[index].trim() && !isBlockStart(lines[index])) { paragraph.push(lines[index]); index += 1; }
+      append('p', paragraph.map(inlineNoteMarkdown).join('<br>'));
+    }
+    return fragment;
+  }
   async function importReaderNotes(file) {
     const status = $('literatureNoteImportStatus');
     const extension = file?.name?.split('.').pop()?.toLowerCase();
@@ -301,8 +356,9 @@
     notes.forEach(note => {
       const card = document.createElement('article');
       card.className = 'literature-note-card';
-      const text = document.createElement('p');
-      text.textContent = note.text || '';
+      const text = document.createElement('div');
+      text.className = 'literature-note-markdown';
+      text.append(markdownNoteFragment(note.text || ''));
       const footer = document.createElement('footer');
       const date = document.createElement('time');
       date.textContent = new Date(note.updatedAt || note.createdAt || Date.now()).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -371,6 +427,12 @@
     reader.className = 'literature-reader';
     reader.hidden = true;
     reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地文献阅读器"></iframe></section><div id="literatureReaderDivider" class="literature-reader-divider" role="separator" aria-label="调整文献与笔记宽度" aria-orientation="vertical" tabindex="0"></div><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small id="literatureNoteImportStatus">与当前文献关联保存</small></div><label class="literature-note-import" title="导入 TXT 或 Markdown 笔记文件">导入笔记<input id="literatureNoteFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown"></label></div><div class="literature-note-composer"><textarea id="literatureNoteInput" rows="4" placeholder="写下阅读要点、方法、数据或疑问"></textarea><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
+    if (!document.getElementById('literature-note-markdown-style')) {
+      const style = document.createElement('style');
+      style.id = 'literature-note-markdown-style';
+      style.textContent = '#literatureReader .literature-note-markdown{line-height:1.65;color:inherit;overflow-wrap:anywhere}#literatureReader .literature-note-markdown p{margin:0 0 .7em}#literatureReader .literature-note-markdown p:last-child{margin-bottom:0}#literatureReader .literature-note-markdown h1,#literatureReader .literature-note-markdown h2,#literatureReader .literature-note-markdown h3,#literatureReader .literature-note-markdown h4,#literatureReader .literature-note-markdown h5,#literatureReader .literature-note-markdown h6{margin:.15em 0 .5em;line-height:1.3;color:inherit}#literatureReader .literature-note-markdown h1{font-size:1.35em}#literatureReader .literature-note-markdown h2{font-size:1.2em}#literatureReader .literature-note-markdown h3{font-size:1.08em}#literatureReader .literature-note-markdown ul,#literatureReader .literature-note-markdown ol{margin:.35em 0 .75em;padding-left:1.5em}#literatureReader .literature-note-markdown li{margin:.2em 0}#literatureReader .literature-note-markdown blockquote{margin:.5em 0;padding:.45em .8em;border-left:3px solid currentColor;opacity:.8;background:rgba(127,127,127,.08)}#literatureReader .literature-note-markdown code{padding:.1em .35em;border-radius:4px;background:rgba(127,127,127,.14);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.92em}';
+      document.head.append(style);
+    }
     document.body.append(reader);
     $('literatureReaderBack').addEventListener('click', closePdfReader);
     $('literatureReaderClose').addEventListener('click', closePdfReader);
