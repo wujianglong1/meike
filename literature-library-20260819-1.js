@@ -12,6 +12,7 @@
   let readingExtension = '';
   let documentEditing = false;
   let formattingTarget = 'note';
+  let documentSelection = null;
   let activeFolderId = localStorage.getItem('meike-literature-active-folder') || 'all';
   let sortMode = localStorage.getItem('meike-literature-sort') || 'updated-desc';
 
@@ -388,7 +389,17 @@
     const frame = $('literatureReaderFrame');
     const documentBody = frame?.contentDocument?.body;
     if (formattingTarget === 'document' && documentEditing && documentBody) {
-      try { frame.contentDocument.execCommand(command, false, value); } catch {}
+      try {
+        const doc = frame.contentDocument;
+        if (documentSelection) {
+          const selection = doc.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(documentSelection);
+        }
+        doc.execCommand('styleWithCSS', false, true);
+        doc.execCommand(command, false, value);
+        documentSelection = doc.getSelection()?.rangeCount ? doc.getSelection().getRangeAt(0).cloneRange() : documentSelection;
+      } catch {}
       return;
     }
     const editor = $('literatureNoteInput');
@@ -566,6 +577,7 @@
     readingExtension = '';
     documentEditing = false;
     formattingTarget = 'note';
+    documentSelection = null;
   }
   const editableDocumentExtensions = new Set(['html', 'htm', 'txt', 'md', 'markdown']);
   const escapeDocumentHtml = value => String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -588,6 +600,7 @@
     if (!body) return;
     documentEditing = !documentEditing;
     formattingTarget = documentEditing ? 'document' : 'note';
+    if (!documentEditing) documentSelection = null;
     body.contentEditable = documentEditing ? 'true' : 'false';
     body.classList.toggle('meike-document-editing', documentEditing);
     if (documentEditing) body.focus();
@@ -614,6 +627,7 @@
     updateReadingItem(item => { item.pdfSize = blob.size; });
     documentEditing = false;
     formattingTarget = 'note';
+    documentSelection = null;
     updateDocumentEditorControls();
   }
   function createPdfReader() {
@@ -643,6 +657,14 @@
       ['pointerdown', 'focusin', 'keyup'].forEach(type => documentBody.addEventListener(type, () => {
         if (documentEditing) formattingTarget = 'document';
       }));
+      documentBody.ownerDocument.addEventListener('selectionchange', () => {
+        if (!documentEditing) return;
+        const selection = documentBody.ownerDocument.getSelection();
+        if (selection?.rangeCount && !selection.isCollapsed && documentBody.contains(selection.anchorNode) && documentBody.contains(selection.focusNode)) {
+          formattingTarget = 'document';
+          documentSelection = selection.getRangeAt(0).cloneRange();
+        }
+      });
     });
     reader.querySelectorAll('[data-note-command]').forEach(button => {
       button.addEventListener('mousedown', event => event.preventDefault());
