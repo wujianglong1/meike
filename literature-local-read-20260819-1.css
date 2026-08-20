@@ -10,6 +10,13 @@
 @media(max-width:980px){.literature-reader{left:0}.literature-reader-workspace{grid-template-columns:minmax(0,1fr) 10px minmax(260px,var(--literature-notes-width,320px))}}@media(max-width:700px){.literature-reader{grid-template-rows:54px minmax(0,1fr)}.literature-reader-bar{padding:0 12px}.literature-reader-workspace{grid-template-columns:1fr;grid-template-rows:minmax(380px,58vh) minmax(310px,42vh);overflow:auto}.literature-reader-divider{display:none}.literature-notes{border-left:0;border-top:1px solid var(--line)}}
 /* The notes pane must always stay inside the reader viewport. */
 #literatureReader .literature-reader-workspace{min-height:0!important;height:100%!important}
+#literatureReader .literature-reader-document{display:flex;flex-direction:column;min-height:0}
+#literatureReader .literature-document-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:42px;padding:6px 12px;border-bottom:1px solid var(--line);background:var(--card);color:var(--muted);font-size:12px}
+#literatureReader .literature-document-toolbar>div{display:flex;gap:6px}
+#literatureReader .literature-document-toolbar button{border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);padding:6px 9px;font:600 12px/1 inherit;cursor:pointer}
+#literatureReader .literature-document-toolbar button:last-child{border-color:var(--accent);background:var(--accent);color:#fff}
+#literatureReader .literature-document-toolbar button:disabled{opacity:.45;cursor:default}
+#literatureReader .literature-reader-frame{flex:1 1 auto;min-height:0}
 #literatureReader .literature-notes{display:flex!important;flex-direction:column!important;min-height:0!important;height:100%!important;overflow:hidden!important}
 #literatureReader .literature-notes-head,#literatureReader .literature-note-composer{flex:0 0 auto}
 #literatureReader .literature-note-composer{max-height:none;overflow:visible}
