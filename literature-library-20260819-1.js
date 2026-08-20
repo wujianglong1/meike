@@ -332,7 +332,7 @@
     const template = document.createElement('template');
     template.innerHTML = String(source || '');
     const holder = document.createElement('div');
-    const allowed = new Set(['p', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'u', 's', 'mark', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a']);
+    const allowed = new Set(['p', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'u', 's', 'mark', 'span', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a']);
     const aliases = { B: 'strong', I: 'em', STRIKE: 's', DEL: 's', U: 'u' };
     const clean = node => {
       if (node.nodeType === 3) return document.createTextNode(node.nodeValue || '');
@@ -345,6 +345,12 @@
         return fragment;
       }
       const element = document.createElement(tag);
+      if (tag === 'span') {
+        const color = node.style?.color || '';
+        const backgroundColor = node.style?.backgroundColor || '';
+        if (color) element.style.color = color;
+        if (backgroundColor) element.style.backgroundColor = backgroundColor;
+      }
       if (tag === 'a') {
         const href = node.getAttribute('href') || '';
         if (/^(https?:|mailto:)/i.test(href)) { element.href = href; element.target = '_blank'; element.rel = 'noopener'; }
@@ -385,8 +391,40 @@
   function noteEditorPayload() {
     const editor = $('literatureNoteInput');
     const text = String(editor?.innerText || editor?.textContent || '').replace(/\r\n?/g, '\n').trim();
-    const hasRichFormat = Boolean(editor?.querySelector('h1,h2,h3,h4,h5,h6,strong,em,u,s,mark,ul,ol,blockquote,code,pre,a'));
+    const hasRichFormat = Boolean(editor?.querySelector('h1,h2,h3,h4,h5,h6,strong,em,u,s,mark,span,ul,ol,blockquote,code,pre,a'));
     return { text, html: hasRichFormat ? sanitizeNoteHtml(editor.innerHTML) : noteHtmlFromMarkdown(text) };
+  }
+  function applyDocumentInlineFormat(command, value) {
+    const frame = $('literatureReaderFrame');
+    const editor = $('literatureDocumentEditor');
+    const isDraft = formattingTarget === 'document' && documentDraftEditing;
+    const isFrame = formattingTarget === 'document' && documentEditing;
+    const root = isDraft ? editor : isFrame ? frame?.contentDocument?.body : null;
+    const doc = isDraft ? document : frame?.contentDocument;
+    if (!root || !doc) return false;
+    const selection = doc.getSelection();
+    const storedSelection = isDraft ? documentDraftSelection : documentSelection;
+    if (storedSelection) {
+      try { selection.removeAllRanges(); selection.addRange(storedSelection); } catch {}
+    }
+    if (!selection?.rangeCount || selection.isCollapsed) return false;
+    const range = selection.getRangeAt(0);
+    if (!root.contains(range.commonAncestorContainer)) return false;
+    const tag = ({ bold: 'strong', italic: 'em', underline: 'u', strikeThrough: 's' })[command];
+    const wrapper = tag ? doc.createElement(tag) : command === 'hiliteColor' ? doc.createElement('mark') : command === 'foreColor' ? doc.createElement('span') : null;
+    if (!wrapper) return false;
+    if (command === 'foreColor') wrapper.style.color = value || '#1f2937';
+    if (command === 'hiliteColor') wrapper.style.backgroundColor = value || '#fff1a8';
+    try {
+      wrapper.append(range.extractContents());
+      range.insertNode(wrapper);
+      range.selectNodeContents(wrapper);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      if (isDraft) documentDraftSelection = range.cloneRange();
+      else documentSelection = range.cloneRange();
+      return true;
+    } catch { return false; }
   }
   function applySharedFormat(command, value = null) {
     const frame = $('literatureReaderFrame');
@@ -395,6 +433,7 @@
       const editor = $('literatureDocumentEditor');
       if (!editor) return;
       editor.focus();
+      if (['bold', 'italic', 'underline', 'strikeThrough', 'hiliteColor', 'foreColor'].includes(command) && applyDocumentInlineFormat(command, value)) return;
       try {
         const selection = document.getSelection();
         if (documentDraftSelection) {
@@ -408,6 +447,7 @@
       return;
     }
     if (formattingTarget === 'document' && documentEditing && documentBody) {
+      if (['bold', 'italic', 'underline', 'strikeThrough', 'hiliteColor', 'foreColor'].includes(command) && applyDocumentInlineFormat(command, value)) return;
       try {
         const doc = frame.contentDocument;
         if (documentSelection) {
