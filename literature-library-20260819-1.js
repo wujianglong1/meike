@@ -325,12 +325,13 @@
     const template = document.createElement('template');
     template.innerHTML = String(source || '');
     const holder = document.createElement('div');
-    const allowed = new Set(['p', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a']);
-    const aliases = { B: 'strong', I: 'em' };
+    const allowed = new Set(['p', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'em', 'u', 's', 'mark', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a']);
+    const aliases = { B: 'strong', I: 'em', STRIKE: 's', DEL: 's', U: 'u' };
     const clean = node => {
       if (node.nodeType === 3) return document.createTextNode(node.nodeValue || '');
       if (node.nodeType !== 1) return document.createDocumentFragment();
-      const tag = aliases[node.tagName] || node.tagName.toLowerCase();
+      const styleText = node.getAttribute('style') || '';
+      const tag = aliases[node.tagName] || (node.tagName === 'FONT' && /background-color/i.test(styleText) ? 'mark' : node.tagName.toLowerCase());
       if (!allowed.has(tag)) {
         const fragment = document.createDocumentFragment();
         node.childNodes.forEach(child => fragment.append(clean(child)));
@@ -377,8 +378,15 @@
   function noteEditorPayload() {
     const editor = $('literatureNoteInput');
     const text = String(editor?.innerText || editor?.textContent || '').replace(/\r\n?/g, '\n').trim();
-    const hasRichFormat = Boolean(editor?.querySelector('h1,h2,h3,h4,h5,h6,strong,em,ul,ol,blockquote,code,pre,a'));
+    const hasRichFormat = Boolean(editor?.querySelector('h1,h2,h3,h4,h5,h6,strong,em,u,s,mark,ul,ol,blockquote,code,pre,a'));
     return { text, html: hasRichFormat ? sanitizeNoteHtml(editor.innerHTML) : noteHtmlFromMarkdown(text) };
+  }
+  function applyNoteFormat(command, value = null) {
+    const editor = $('literatureNoteInput');
+    if (!editor) return;
+    editor.focus();
+    try { document.execCommand(command, false, value); } catch {}
+    saveNoteDraft();
   }
   function saveNoteDraft() {
     if (!readingId) return;
@@ -554,7 +562,7 @@
     reader.id = 'literatureReader';
     reader.className = 'literature-reader';
     reader.hidden = true;
-    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地文献阅读器"></iframe></section><div id="literatureReaderDivider" class="literature-reader-divider" role="separator" aria-label="调整文献与笔记宽度" aria-orientation="vertical" tabindex="0"></div><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small id="literatureNoteImportStatus">与当前文献关联保存</small></div><label class="literature-note-import" title="导入 TXT 或 Markdown 笔记文件">导入笔记<input id="literatureNoteFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown"></label></div><div class="literature-note-composer"><div id="literatureNoteInput" class="literature-note-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="粘贴或写下阅读要点、方法、数据或疑问"></div><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
+    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地文献阅读器"></iframe></section><div id="literatureReaderDivider" class="literature-reader-divider" role="separator" aria-label="调整文献与笔记宽度" aria-orientation="vertical" tabindex="0"></div><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small id="literatureNoteImportStatus">与当前文献关联保存</small></div><label class="literature-note-import" title="导入 TXT 或 Markdown 笔记文件">导入笔记<input id="literatureNoteFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown"></label></div><div class="literature-note-composer"><div class="literature-note-toolbar" role="toolbar" aria-label="笔记文字格式"><button type="button" data-note-command="bold" title="加粗">B</button><button type="button" data-note-command="italic" title="斜体"><i>I</i></button><button type="button" data-note-command="underline" title="下划线"><u>U</u></button><button type="button" data-note-command="strikeThrough" title="删除线"><s>S</s></button><button type="button" data-note-command="hiliteColor" data-note-value="#fff1a8" title="高亮">高亮</button><button type="button" data-note-command="insertUnorderedList" title="项目符号">• 列表</button><button type="button" data-note-command="formatBlock" data-note-value="blockquote" title="引用">引用</button><button type="button" data-note-command="removeFormat" title="清除格式">清除</button></div><div id="literatureNoteInput" class="literature-note-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="粘贴或写下阅读要点、方法、数据或疑问"></div><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
     if (!document.getElementById('literature-note-markdown-style')) {
       const style = document.createElement('style');
       style.id = 'literature-note-markdown-style';
@@ -565,6 +573,10 @@
     $('literatureReaderBack').addEventListener('click', closePdfReader);
     $('literatureReaderClose').addEventListener('click', closePdfReader);
     $('literatureNoteSave').addEventListener('click', saveReaderNote);
+    reader.querySelectorAll('[data-note-command]').forEach(button => {
+      button.addEventListener('mousedown', event => event.preventDefault());
+      button.addEventListener('click', () => applyNoteFormat(button.dataset.noteCommand, button.dataset.noteValue || null));
+    });
     const workspace = reader.querySelector('.literature-reader-workspace');
     const divider = $('literatureReaderDivider');
     const savedNotesWidth = Number(localStorage.getItem('meike-literature-notes-width'));

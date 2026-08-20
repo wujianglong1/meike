@@ -13,6 +13,10 @@
 #literatureReader .literature-notes{display:flex!important;flex-direction:column!important;min-height:0!important;height:100%!important;overflow:hidden!important}
 #literatureReader .literature-notes-head,#literatureReader .literature-note-composer{flex:0 0 auto}
 #literatureReader .literature-note-composer{max-height:none;overflow:visible}
+#literatureReader .literature-note-toolbar{display:flex;align-items:center;gap:4px;flex-wrap:wrap;min-height:30px}
+#literatureReader .literature-note-toolbar button{border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);min-width:29px;height:28px;padding:0 7px;font:600 12px/1 inherit;cursor:pointer}
+#literatureReader .literature-note-toolbar button:hover,#literatureReader .literature-note-toolbar button:focus-visible{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--card));outline:0}
+#literatureReader .literature-note-editor mark,.literature-note-markdown mark{background:#fff1a8;color:inherit;padding:0 .08em;border-radius:2px}
 #literatureReader .literature-note-editor{height:180px;min-height:120px;max-height:none;resize:vertical;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;scrollbar-gutter:stable;scrollbar-width:thin}
 #literatureReader .literature-note-editor::-webkit-scrollbar,#literatureReader .literature-notes-list::-webkit-scrollbar{width:10px}
 #literatureReader .literature-note-editor::-webkit-scrollbar-thumb,#literatureReader .literature-notes-list::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--accent) 42%,var(--line));border:3px solid transparent;border-radius:8px;background-clip:padding-box}
