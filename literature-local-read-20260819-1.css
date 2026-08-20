@@ -27,6 +27,9 @@
 #literatureReader .literature-note-toolbar{display:flex;align-items:center;gap:4px;flex-wrap:wrap;min-height:30px}
 #literatureReader .literature-note-toolbar button{border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);min-width:44px;height:30px;padding:0 9px;font:600 12px/1 inherit;cursor:pointer}
 #literatureReader .literature-note-toolbar button:hover,#literatureReader .literature-note-toolbar button:focus-visible{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--card));outline:0}
+#literatureReader .literature-color-control{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 7px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);font:600 12px/1 inherit;cursor:pointer;white-space:nowrap}
+#literatureReader .literature-color-control:hover{border-color:var(--accent);color:var(--accent)}
+#literatureReader .literature-color-control input{width:20px;height:20px;padding:0;border:0;background:transparent;cursor:pointer}
 #literatureReader .literature-formatting-hint{display:block;color:var(--muted);font-size:11px;line-height:1.45}
 #literatureReader .literature-note-editor mark,.literature-note-markdown mark{background:#fff1a8;color:inherit;padding:0 .08em;border-radius:2px}
 #literatureReader .literature-note-editor{height:180px;min-height:120px;max-height:none;resize:vertical;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;scrollbar-gutter:stable;scrollbar-width:thin}

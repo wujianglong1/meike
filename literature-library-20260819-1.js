@@ -14,6 +14,7 @@
   let documentDraftEditing = false;
   let formattingTarget = 'note';
   let documentSelection = null;
+  let noteSelection = null;
   let activeFolderId = localStorage.getItem('meike-literature-active-folder') || 'all';
   let sortMode = localStorage.getItem('meike-literature-sort') || 'updated-desc';
 
@@ -413,6 +414,11 @@
     const editor = $('literatureNoteInput');
     if (!editor) return;
     editor.focus();
+    if (noteSelection) {
+      const selection = document.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(noteSelection);
+    }
     try { document.execCommand(command, false, value); } catch {}
     saveNoteDraft();
   }
@@ -587,6 +593,7 @@
     documentDraftEditing = false;
     formattingTarget = 'note';
     documentSelection = null;
+    noteSelection = null;
   }
   const editableDocumentExtensions = new Set(['html', 'htm', 'txt', 'md', 'markdown']);
   const escapeDocumentHtml = value => String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -684,7 +691,7 @@
     reader.id = 'literatureReader';
     reader.className = 'literature-reader';
     reader.hidden = true;
-    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><div class="literature-document-toolbar"><span id="literatureDocumentStatus">只读预览</span><div><button id="literatureDocumentEdit" type="button" hidden>编辑正文</button><button id="literatureDocumentSave" type="button" hidden disabled>保存正文</button></div></div><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地文献阅读器"></iframe><div id="literatureDocumentEditor" class="literature-document-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="在此编辑文档副本；原始 PDF、Word、PPT 文件保持不变"></div></section><div id="literatureReaderDivider" class="literature-reader-divider" role="separator" aria-label="调整文献与笔记宽度" aria-orientation="vertical" tabindex="0"></div><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small id="literatureNoteImportStatus">与当前文献关联保存</small></div><label class="literature-note-import" title="导入 TXT 或 Markdown 笔记文件">导入笔记<input id="literatureNoteFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown"></label></div><div class="literature-note-composer"><div class="literature-note-toolbar" role="toolbar" aria-label="正文和笔记文字格式"><button type="button" data-note-command="bold" title="加粗">加粗</button><button type="button" data-note-command="italic" title="斜体">斜体</button><button type="button" data-note-command="underline" title="下划线">下划线</button><button type="button" data-note-command="strikeThrough" title="删除线">删除线</button><button type="button" data-note-command="hiliteColor" data-note-value="#fff1a8" title="高亮">高亮</button><button type="button" data-note-command="insertUnorderedList" title="项目符号">列表</button><button type="button" data-note-command="formatBlock" data-note-value="blockquote" title="引用">引用</button><button type="button" data-note-command="removeFormat" title="清除格式">清除格式</button></div><small class="literature-formatting-hint">在正文或笔记中选中文字后，直接使用这些按钮</small><div id="literatureNoteInput" class="literature-note-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="粘贴或写下阅读要点、方法、数据或疑问"></div><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
+    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><div class="literature-document-toolbar"><span id="literatureDocumentStatus">只读预览</span><div><button id="literatureDocumentEdit" type="button" hidden>编辑正文</button><button id="literatureDocumentSave" type="button" hidden disabled>保存正文</button></div></div><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地文献阅读器"></iframe><div id="literatureDocumentEditor" class="literature-document-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="在此编辑文档副本；原始 PDF、Word、PPT 文件保持不变"></div></section><div id="literatureReaderDivider" class="literature-reader-divider" role="separator" aria-label="调整文献与笔记宽度" aria-orientation="vertical" tabindex="0"></div><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small id="literatureNoteImportStatus">与当前文献关联保存</small></div><label class="literature-note-import" title="导入 TXT 或 Markdown 笔记文件">导入笔记<input id="literatureNoteFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown"></label></div><div class="literature-note-composer"><div class="literature-note-toolbar" role="toolbar" aria-label="正文和笔记文字格式"><button type="button" data-note-command="bold" title="加粗">加粗</button><button type="button" data-note-command="italic" title="斜体">斜体</button><button type="button" data-note-command="underline" title="下划线">下划线</button><button type="button" data-note-command="strikeThrough" title="删除线">删除线</button><button type="button" data-note-command="hiliteColor" data-note-value="#fff1a8" title="高亮">高亮</button><label class="literature-color-control" title="文字颜色"><span>文字颜色</span><input id="literatureFormatColor" type="color" value="#355070" aria-label="选择文字颜色"></label><button type="button" data-note-command="insertUnorderedList" title="项目符号">列表</button><button type="button" data-note-command="formatBlock" data-note-value="blockquote" title="引用">引用</button><button type="button" data-note-command="removeFormat" title="清除格式">清除格式</button></div><small class="literature-formatting-hint">在正文或笔记中选中文字后，直接使用这些按钮</small><div id="literatureNoteInput" class="literature-note-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="粘贴或写下阅读要点、方法、数据或疑问"></div><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
     if (!document.getElementById('literature-note-markdown-style')) {
       const style = document.createElement('style');
       style.id = 'literature-note-markdown-style';
@@ -699,6 +706,11 @@
     $('literatureDocumentSave').addEventListener('click', saveEditableDocument);
     $('literatureDocumentEditor').addEventListener('focusin', () => { formattingTarget = 'document'; });
     $('literatureDocumentEditor').addEventListener('input', updateDocumentEditorControls);
+    $('literatureFormatColor').addEventListener('mousedown', () => {
+      const selection = document.getSelection();
+      if (selection?.rangeCount && !selection.isCollapsed) noteSelection = selection.getRangeAt(0).cloneRange();
+    });
+    $('literatureFormatColor').addEventListener('change', event => applySharedFormat('foreColor', event.target.value));
     $('literatureReaderFrame').addEventListener('load', () => {
       updateDocumentEditorControls();
       const documentBody = $('literatureReaderFrame').contentDocument?.body;
@@ -789,6 +801,10 @@
       await importReaderNotes(event.dataTransfer?.files?.[0]);
     });
     $('literatureNoteInput').addEventListener('focusin', () => { formattingTarget = 'note'; });
+    $('literatureNoteInput').addEventListener('keyup', () => {
+      const selection = document.getSelection();
+      if (selection?.rangeCount && !selection.isCollapsed && $('literatureNoteInput').contains(selection.anchorNode) && $('literatureNoteInput').contains(selection.focusNode)) noteSelection = selection.getRangeAt(0).cloneRange();
+    });
     $('literatureNoteInput').addEventListener('input', saveNoteDraft);
     $('literatureNoteInput').addEventListener('paste', insertNoteContent);
     $('literatureNoteInput').addEventListener('keydown', event => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') saveReaderNote(); });
