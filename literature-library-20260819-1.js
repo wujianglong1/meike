@@ -14,6 +14,7 @@
   let documentDraftEditing = false;
   let formattingTarget = 'note';
   let documentSelection = null;
+  let documentDraftSelection = null;
   let noteSelection = null;
   let activeFolderId = localStorage.getItem('meike-literature-active-folder') || 'all';
   let sortMode = localStorage.getItem('meike-literature-sort') || 'updated-desc';
@@ -394,7 +395,16 @@
       const editor = $('literatureDocumentEditor');
       if (!editor) return;
       editor.focus();
-      try { document.execCommand('styleWithCSS', false, true); document.execCommand(command, false, value); } catch {}
+      try {
+        const selection = document.getSelection();
+        if (documentDraftSelection) {
+          selection.removeAllRanges();
+          selection.addRange(documentDraftSelection);
+        }
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand(command, false, value);
+        documentDraftSelection = selection.rangeCount ? selection.getRangeAt(0).cloneRange() : documentDraftSelection;
+      } catch {}
       return;
     }
     if (formattingTarget === 'document' && documentEditing && documentBody) {
@@ -593,6 +603,7 @@
     documentDraftEditing = false;
     formattingTarget = 'note';
     documentSelection = null;
+    documentDraftSelection = null;
     noteSelection = null;
   }
   const editableDocumentExtensions = new Set(['html', 'htm', 'txt', 'md', 'markdown']);
@@ -624,6 +635,7 @@
       documentDraftEditing = !documentDraftEditing;
       if (documentDraftEditing) {
         loadDocumentDraft();
+        documentDraftSelection = null;
         formattingTarget = 'document';
         frame.hidden = true;
         editor.hidden = false;
@@ -631,6 +643,7 @@
       } else {
         frame.hidden = false;
         editor.hidden = true;
+        documentDraftSelection = null;
       }
       updateDocumentEditorControls();
       return;
@@ -655,6 +668,7 @@
         item.documentDraftUpdatedAt = Date.now();
       });
       documentDraftEditing = false;
+      documentDraftSelection = null;
       editor.hidden = true;
       $('literatureReaderFrame').hidden = false;
       updateDocumentEditorControls();
@@ -682,6 +696,7 @@
     documentDraftEditing = false;
     formattingTarget = 'note';
     documentSelection = null;
+    documentDraftSelection = null;
     updateDocumentEditorControls();
   }
   function createPdfReader() {
@@ -714,6 +729,16 @@
     $('literatureDocumentSave').addEventListener('click', saveEditableDocument);
     $('literatureDocumentEditor').addEventListener('focusin', () => { formattingTarget = 'document'; });
     $('literatureDocumentEditor').addEventListener('input', updateDocumentEditorControls);
+    ['keyup', 'mouseup', 'touchend'].forEach(type => {
+      $('literatureDocumentEditor').addEventListener(type, () => {
+        const editor = $('literatureDocumentEditor');
+        const selection = document.getSelection();
+        if (documentDraftEditing && selection?.rangeCount && !selection.isCollapsed && editor.contains(selection.anchorNode) && editor.contains(selection.focusNode)) {
+          formattingTarget = 'document';
+          documentDraftSelection = selection.getRangeAt(0).cloneRange();
+        }
+      });
+    });
     $('literatureReaderFrame').addEventListener('load', () => {
       updateDocumentEditorControls();
       const documentBody = $('literatureReaderFrame').contentDocument?.body;
