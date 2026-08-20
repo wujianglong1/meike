@@ -11,6 +11,7 @@
   let editingNoteId = '';
   let readingExtension = '';
   let documentEditing = false;
+  let documentDraftEditing = false;
   let formattingTarget = 'note';
   let documentSelection = null;
   let activeFolderId = localStorage.getItem('meike-literature-active-folder') || 'all';
@@ -388,6 +389,13 @@
   function applySharedFormat(command, value = null) {
     const frame = $('literatureReaderFrame');
     const documentBody = frame?.contentDocument?.body;
+    if (formattingTarget === 'document' && documentDraftEditing) {
+      const editor = $('literatureDocumentEditor');
+      if (!editor) return;
+      editor.focus();
+      try { document.execCommand('styleWithCSS', false, true); document.execCommand(command, false, value); } catch {}
+      return;
+    }
     if (formattingTarget === 'document' && documentEditing && documentBody) {
       try {
         const doc = frame.contentDocument;
@@ -576,6 +584,7 @@
     editingNoteId = '';
     readingExtension = '';
     documentEditing = false;
+    documentDraftEditing = false;
     formattingTarget = 'note';
     documentSelection = null;
   }
@@ -583,18 +592,42 @@
   const escapeDocumentHtml = value => String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   function updateDocumentEditorControls() {
     const editable = editableDocumentExtensions.has(readingExtension);
+    const available = Boolean(readingId);
     const edit = $('literatureDocumentEdit');
     const save = $('literatureDocumentSave');
     const status = $('literatureDocumentStatus');
     if (!edit || !save || !status) return;
-    edit.hidden = !editable;
-    save.hidden = !editable;
-    save.disabled = !editable || !documentEditing;
-    edit.textContent = documentEditing ? '结束编辑' : '编辑正文';
-    status.textContent = !editable ? '只读预览' : (documentEditing ? '正在编辑本地文档' : '本地文档');
+    edit.hidden = !available;
+    save.hidden = !available;
+    save.disabled = !available || (!documentEditing && !documentDraftEditing);
+    edit.textContent = documentEditing || documentDraftEditing ? '结束编辑' : (editable ? '编辑正文' : '编辑副本');
+    status.textContent = !available ? '只读预览' : editable ? (documentEditing ? '正在编辑本地文档' : '本地文档') : (documentDraftEditing ? '正在编辑文档副本（原文件保留）' : '原文件预览 · 可编辑副本');
+  }
+  function loadDocumentDraft() {
+    const editor = $('literatureDocumentEditor');
+    if (!editor) return;
+    const item = read().find(record => record.id === readingId);
+    editor.innerHTML = item?.documentDraftHtml ? sanitizeNoteHtml(item.documentDraftHtml) : '';
   }
   function toggleDocumentEditing() {
-    if (!editableDocumentExtensions.has(readingExtension)) return;
+    if (!editableDocumentExtensions.has(readingExtension)) {
+      const frame = $('literatureReaderFrame');
+      const editor = $('literatureDocumentEditor');
+      if (!frame || !editor || !readingId) return;
+      documentDraftEditing = !documentDraftEditing;
+      if (documentDraftEditing) {
+        loadDocumentDraft();
+        formattingTarget = 'document';
+        frame.hidden = true;
+        editor.hidden = false;
+        editor.focus();
+      } else {
+        frame.hidden = false;
+        editor.hidden = true;
+      }
+      updateDocumentEditorControls();
+      return;
+    }
     const frame = $('literatureReaderFrame');
     const body = frame?.contentDocument?.body;
     if (!body) return;
@@ -607,6 +640,19 @@
     updateDocumentEditorControls();
   }
   async function saveEditableDocument() {
+    if (documentDraftEditing && readingId) {
+      const editor = $('literatureDocumentEditor');
+      if (!editor) return;
+      updateReadingItem(item => {
+        item.documentDraftHtml = sanitizeNoteHtml(editor.innerHTML);
+        item.documentDraftUpdatedAt = Date.now();
+      });
+      documentDraftEditing = false;
+      editor.hidden = true;
+      $('literatureReaderFrame').hidden = false;
+      updateDocumentEditorControls();
+      return;
+    }
     if (!documentEditing || !readingId) return;
     const frame = $('literatureReaderFrame');
     const doc = frame?.contentDocument;
@@ -626,6 +672,7 @@
     await savePdf({ ...stored, blob, size: blob.size, type, updatedAt: Date.now() });
     updateReadingItem(item => { item.pdfSize = blob.size; });
     documentEditing = false;
+    documentDraftEditing = false;
     formattingTarget = 'note';
     documentSelection = null;
     updateDocumentEditorControls();
@@ -637,7 +684,7 @@
     reader.id = 'literatureReader';
     reader.className = 'literature-reader';
     reader.hidden = true;
-    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><div class="literature-document-toolbar"><span id="literatureDocumentStatus">只读预览</span><div><button id="literatureDocumentEdit" type="button" hidden>编辑正文</button><button id="literatureDocumentSave" type="button" hidden disabled>保存正文</button></div></div><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地文献阅读器"></iframe></section><div id="literatureReaderDivider" class="literature-reader-divider" role="separator" aria-label="调整文献与笔记宽度" aria-orientation="vertical" tabindex="0"></div><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small id="literatureNoteImportStatus">与当前文献关联保存</small></div><label class="literature-note-import" title="导入 TXT 或 Markdown 笔记文件">导入笔记<input id="literatureNoteFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown"></label></div><div class="literature-note-composer"><div class="literature-note-toolbar" role="toolbar" aria-label="正文和笔记文字格式"><button type="button" data-note-command="bold" title="加粗">加粗</button><button type="button" data-note-command="italic" title="斜体">斜体</button><button type="button" data-note-command="underline" title="下划线">下划线</button><button type="button" data-note-command="strikeThrough" title="删除线">删除线</button><button type="button" data-note-command="hiliteColor" data-note-value="#fff1a8" title="高亮">高亮</button><button type="button" data-note-command="insertUnorderedList" title="项目符号">列表</button><button type="button" data-note-command="formatBlock" data-note-value="blockquote" title="引用">引用</button><button type="button" data-note-command="removeFormat" title="清除格式">清除格式</button></div><small class="literature-formatting-hint">在正文或笔记中选中文字后，直接使用这些按钮</small><div id="literatureNoteInput" class="literature-note-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="粘贴或写下阅读要点、方法、数据或疑问"></div><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
+    reader.innerHTML = '<header class="literature-reader-bar"><button id="literatureReaderBack" class="literature-reader-back" type="button" aria-label="返回文献库" title="返回文献库">←</button><h2 id="literatureReaderTitle"></h2><button id="literatureReaderClose" class="literature-reader-close" type="button" aria-label="关闭阅读器" title="关闭">×</button></header><div class="literature-reader-workspace"><section class="literature-reader-document"><div class="literature-document-toolbar"><span id="literatureDocumentStatus">只读预览</span><div><button id="literatureDocumentEdit" type="button" hidden>编辑正文</button><button id="literatureDocumentSave" type="button" hidden disabled>保存正文</button></div></div><iframe id="literatureReaderFrame" class="literature-reader-frame" title="本地文献阅读器"></iframe><div id="literatureDocumentEditor" class="literature-document-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="在此编辑文档副本；原始 PDF、Word、PPT 文件保持不变"></div></section><div id="literatureReaderDivider" class="literature-reader-divider" role="separator" aria-label="调整文献与笔记宽度" aria-orientation="vertical" tabindex="0"></div><aside class="literature-notes"><div class="literature-notes-head"><div><span>阅读笔记</span><small id="literatureNoteImportStatus">与当前文献关联保存</small></div><label class="literature-note-import" title="导入 TXT 或 Markdown 笔记文件">导入笔记<input id="literatureNoteFile" type="file" accept=".txt,.md,.markdown,text/plain,text/markdown"></label></div><div class="literature-note-composer"><div class="literature-note-toolbar" role="toolbar" aria-label="正文和笔记文字格式"><button type="button" data-note-command="bold" title="加粗">加粗</button><button type="button" data-note-command="italic" title="斜体">斜体</button><button type="button" data-note-command="underline" title="下划线">下划线</button><button type="button" data-note-command="strikeThrough" title="删除线">删除线</button><button type="button" data-note-command="hiliteColor" data-note-value="#fff1a8" title="高亮">高亮</button><button type="button" data-note-command="insertUnorderedList" title="项目符号">列表</button><button type="button" data-note-command="formatBlock" data-note-value="blockquote" title="引用">引用</button><button type="button" data-note-command="removeFormat" title="清除格式">清除格式</button></div><small class="literature-formatting-hint">在正文或笔记中选中文字后，直接使用这些按钮</small><div id="literatureNoteInput" class="literature-note-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="粘贴或写下阅读要点、方法、数据或疑问"></div><button id="literatureNoteSave" type="button">添加笔记</button></div><div id="literatureNotesList" class="literature-notes-list"></div></aside></div>';
     if (!document.getElementById('literature-note-markdown-style')) {
       const style = document.createElement('style');
       style.id = 'literature-note-markdown-style';
@@ -650,6 +697,8 @@
     $('literatureNoteSave').addEventListener('click', saveReaderNote);
     $('literatureDocumentEdit').addEventListener('click', toggleDocumentEditing);
     $('literatureDocumentSave').addEventListener('click', saveEditableDocument);
+    $('literatureDocumentEditor').addEventListener('focusin', () => { formattingTarget = 'document'; });
+    $('literatureDocumentEditor').addEventListener('input', updateDocumentEditorControls);
     $('literatureReaderFrame').addEventListener('load', () => {
       updateDocumentEditorControls();
       const documentBody = $('literatureReaderFrame').contentDocument?.body;
@@ -764,6 +813,7 @@
     const extension = extensionOf(item.pdfName);
     readingExtension = extension;
     documentEditing = false;
+    documentDraftEditing = false;
     const localBlob = await prepareReaderBlob(stored.blob, extension);
     readerUrl = URL.createObjectURL(localBlob);
     readingId = item.id;
@@ -771,6 +821,8 @@
     $('literatureReaderTitle').textContent = item.title || item.pdfName || '本地文献';
     $('literatureReaderFrame').src = extension === 'pdf' ? `${readerUrl}#view=FitH` : readerUrl;
     reader.hidden = false;
+    const documentEditor = $('literatureDocumentEditor');
+    if (documentEditor) documentEditor.hidden = true;
     const savedNotesWidth = Number(localStorage.getItem('meike-literature-notes-width'));
     if (savedNotesWidth >= 260) {
       const workspace = reader.querySelector('.literature-reader-workspace');

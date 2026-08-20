@@ -17,6 +17,10 @@
 #literatureReader .literature-document-toolbar button:last-child{border-color:var(--accent);background:var(--accent);color:#fff}
 #literatureReader .literature-document-toolbar button:disabled{opacity:.45;cursor:default}
 #literatureReader .literature-reader-frame{flex:1 1 auto;min-height:0}
+#literatureReader .literature-document-editor{display:block;flex:1 1 auto;min-height:0;overflow:auto;padding:28px 32px;background:#fff;color:#1f2937;font:15px/1.8 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;outline:0;white-space:pre-wrap}
+#literatureReader .literature-document-editor[hidden]{display:none}
+#literatureReader .literature-document-editor:empty::before{content:attr(data-placeholder);color:#8a94a6;pointer-events:none}
+#literatureReader .literature-document-editor:focus{box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
 #literatureReader .literature-notes{display:flex!important;flex-direction:column!important;min-height:0!important;height:100%!important;overflow:hidden!important}
 #literatureReader .literature-notes-head,#literatureReader .literature-note-composer{flex:0 0 auto}
 #literatureReader .literature-note-composer{max-height:none;overflow:visible}
