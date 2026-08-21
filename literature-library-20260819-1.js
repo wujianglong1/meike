@@ -394,6 +394,30 @@
     const hasRichFormat = Boolean(editor?.querySelector('h1,h2,h3,h4,h5,h6,strong,em,u,s,mark,span,ul,ol,blockquote,code,pre,a'));
     return { text, html: hasRichFormat ? sanitizeNoteHtml(editor.innerHTML) : noteHtmlFromMarkdown(text) };
   }
+  function captureCurrentFormattingSelection() {
+    const frame = $('literatureReaderFrame');
+    if (formattingTarget === 'document' && documentDraftEditing) {
+      const editor = $('literatureDocumentEditor');
+      const selection = document.getSelection();
+      if (editor && selection?.rangeCount && !selection.isCollapsed && editor.contains(selection.anchorNode) && editor.contains(selection.focusNode)) {
+        documentDraftSelection = selection.getRangeAt(0).cloneRange();
+      }
+      return;
+    }
+    if (formattingTarget === 'document' && documentEditing) {
+      const doc = frame?.contentDocument;
+      const selection = doc?.getSelection();
+      if (doc?.body && selection?.rangeCount && !selection.isCollapsed && doc.body.contains(selection.anchorNode) && doc.body.contains(selection.focusNode)) {
+        documentSelection = selection.getRangeAt(0).cloneRange();
+      }
+      return;
+    }
+    const editor = $('literatureNoteInput');
+    const selection = document.getSelection();
+    if (editor && selection?.rangeCount && !selection.isCollapsed && editor.contains(selection.anchorNode) && editor.contains(selection.focusNode)) {
+      noteSelection = selection.getRangeAt(0).cloneRange();
+    }
+  }
   function applyDocumentInlineFormat(command, value) {
     const frame = $('literatureReaderFrame');
     const editor = $('literatureDocumentEditor');
@@ -413,8 +437,8 @@
     const tag = ({ bold: 'strong', italic: 'em', underline: 'u', strikeThrough: 's' })[command];
     const wrapper = tag ? doc.createElement(tag) : command === 'hiliteColor' ? doc.createElement('mark') : command === 'foreColor' ? doc.createElement('span') : null;
     if (!wrapper) return false;
-    if (command === 'foreColor') wrapper.style.color = value || '#1f2937';
-    if (command === 'hiliteColor') wrapper.style.backgroundColor = value || '#fff1a8';
+    if (command === 'foreColor') wrapper.style.setProperty('color', value || '#1f2937', 'important');
+    if (command === 'hiliteColor') wrapper.style.setProperty('background-color', value || '#fff1a8', 'important');
     try {
       wrapper.append(range.extractContents());
       range.insertNode(wrapper);
@@ -796,7 +820,10 @@
       });
     });
     reader.querySelectorAll('[data-note-command]').forEach(button => {
-      button.addEventListener('mousedown', event => event.preventDefault());
+      button.addEventListener('mousedown', event => {
+        captureCurrentFormattingSelection();
+        event.preventDefault();
+      });
       button.addEventListener('click', () => applySharedFormat(button.dataset.noteCommand, button.dataset.noteValue || null));
     });
     const workspace = reader.querySelector('.literature-reader-workspace');
@@ -885,7 +912,7 @@
     if (['txt', 'md', 'markdown'].includes(extension)) return new Blob([`<!doctype html><meta charset="utf-8"><style>html,body{margin:0;background:#fff;color:#1f2937;font:15px/1.75 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}body{padding:24px;white-space:pre-wrap;box-sizing:border-box;min-height:100vh}body.meike-document-editing{outline:3px solid #8da8db;outline-offset:-3px}</style><body>${escapeDocumentHtml(await blob.text())}</body>`], { type: 'text/html' });
     if (extension !== 'html' && extension !== 'htm') return blob;
     const source = await blob.text();
-    const style = '<style id="meike-html-reader-style">html,body{background:#fff!important;color:#1f2937!important;}body{min-height:100vh!important;margin:0!important;padding:24px!important;box-sizing:border-box!important;font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif!important;line-height:1.7!important;}body *{color:inherit!important;background-color:transparent!important;}body.meike-document-editing{outline:3px solid #8da8db!important;outline-offset:-3px!important;}a{color:#2563eb!important;text-decoration:underline!important;}img{max-width:100%!important;height:auto!important;}table{max-width:100%!important;border-collapse:collapse!important;}td,th{border:1px solid #d1d5db!important;padding:6px 9px!important;}</style>';
+    const style = '<style id="meike-html-reader-style">html,body{background:#fff!important;color:#1f2937!important;}body{min-height:100vh!important;margin:0!important;padding:24px!important;box-sizing:border-box!important;font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif!important;line-height:1.7!important;}body *{background-color:transparent!important;}body.meike-document-editing{outline:3px solid #8da8db!important;outline-offset:-3px!important;}a{color:#2563eb!important;text-decoration:underline!important;}img{max-width:100%!important;height:auto!important;}table{max-width:100%!important;border-collapse:collapse!important;}td,th{border:1px solid #d1d5db!important;padding:6px 9px!important;}</style>';
     const themed = /<\/head>/i.test(source) ? source.replace(/<\/head>/i, `${style}</head>`) : `${style}${source}`;
     return new Blob([themed], { type: 'text/html' });
   }
