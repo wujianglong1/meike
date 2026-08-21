@@ -9,6 +9,7 @@
     const current = document.querySelector('.view.active')?.id || document.querySelector('.nav.active')?.dataset.view;
     if (validViews.has(current)) sessionStorage.setItem(viewKey, current);
     button.disabled = true;
+    button.classList.add('is-updating');
     button.textContent = '更新中…';
     try {
       const registration = await navigator.serviceWorker?.getRegistration();

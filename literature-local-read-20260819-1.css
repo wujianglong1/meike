@@ -43,3 +43,9 @@
 #literatureReader .literature-note-editor::-webkit-scrollbar,#literatureReader .literature-notes-list::-webkit-scrollbar{width:10px}
 #literatureReader .literature-note-editor::-webkit-scrollbar-thumb,#literatureReader .literature-notes-list::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--accent) 42%,var(--line));border:3px solid transparent;border-radius:8px;background-clip:padding-box}
 #literatureReader .literature-notes-list{flex:1 1 auto!important;min-height:0!important;height:auto!important;overflow-y:scroll!important;overflow-x:hidden!important;overscroll-behavior:contain;scrollbar-gutter:stable}
+
+#literatureReader{animation:literature-reader-in .28s cubic-bezier(.2,.8,.2,1)}
+#literatureReader .literature-document-toolbar button,#literatureReader .literature-note-toolbar button,#literatureReader .literature-note-import,#literatureReader .literature-note-composer button,#literatureReader .literature-reader-bar button{transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s cubic-bezier(.2,.8,.2,1),border-color .18s ease,background-color .18s ease,color .18s ease}
+#literatureReader .literature-note-card:hover,#literatureReader .literature-card-actions .literature-local-read:hover,#literatureReader .literature-document-toolbar button:hover,#literatureReader .literature-note-toolbar button:hover{transform:translateY(-2px)}
+@keyframes literature-reader-in{from{opacity:.001;transform:translateX(14px) scale(.992)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){#literatureReader,#literatureReader .literature-note-card,#literatureReader .literature-document-toolbar button,#literatureReader .literature-note-toolbar button,#literatureReader .literature-note-import{animation:none!important;transition-duration:.01ms!important}}
