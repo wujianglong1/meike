@@ -14,7 +14,7 @@
 <meta name="theme-color" content="#f4f1ea">
 <title>美刻｜日常计划与生活记录</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="daymark-styles-20260817-87.css?v=89">
+<link rel="stylesheet" href="daymark-styles-20260817-87.css?v=90">
 <link rel="stylesheet" href="translation-guard-20260819-1.css">
 <link rel="stylesheet" href="literature-local-read-20260819-1.css">
 <link rel="stylesheet" href="sidebar-collapse-20260819-1.css">
@@ -269,8 +269,9 @@
 <option value="writing">写作</option>
 <option value="grammar">语法</option>
 </select>
-<textarea id="englishContent" rows="6" placeholder="写下英文、例句、用法、语法点、听力口语心得……"></textarea>
-<textarea id="englishTranslation" rows="3" placeholder="中文理解 / 翻译 / 自己的解释（可选）"></textarea>
+<div class="english-rich-field"><label>例句</label><div class="english-formatbar" data-for="englishSentence"><button type="button" data-command="bold">加粗</button><button type="button" data-command="italic">斜体</button><button type="button" data-command="underline">下划线</button><button type="button" data-command="backColor" data-value="#fff1a8">高亮</button><button type="button" data-command="foreColor" data-value="#d94b4b">红字</button><button type="button" data-command="foreColor" data-value="#2f6fda">蓝字</button><button type="button" data-command="removeFormat">清除格式</button></div><div id="englishSentence" class="english-rich-input" contenteditable="true" data-placeholder="写英文例句、短语或原文摘抄……"></div></div>
+<div class="english-rich-field"><label>译文</label><div class="english-formatbar" data-for="englishTranslation"><button type="button" data-command="bold">加粗</button><button type="button" data-command="italic">斜体</button><button type="button" data-command="underline">下划线</button><button type="button" data-command="backColor" data-value="#fff1a8">高亮</button><button type="button" data-command="foreColor" data-value="#d94b4b">红字</button><button type="button" data-command="foreColor" data-value="#2f6fda">蓝字</button><button type="button" data-command="removeFormat">清除格式</button></div><div id="englishTranslation" class="english-rich-input" contenteditable="true" data-placeholder="写中文译文或自己的理解……"></div></div>
+<div class="english-rich-field"><label>解析</label><div class="english-formatbar" data-for="englishAnalysis"><button type="button" data-command="bold">加粗</button><button type="button" data-command="italic">斜体</button><button type="button" data-command="underline">下划线</button><button type="button" data-command="backColor" data-value="#fff1a8">高亮</button><button type="button" data-command="foreColor" data-value="#d94b4b">红字</button><button type="button" data-command="foreColor" data-value="#2f6fda">蓝字</button><button type="button" data-command="insertUnorderedList">列表</button><button type="button" data-command="removeFormat">清除格式</button></div><div id="englishAnalysis" class="english-rich-input english-rich-input-tall" contenteditable="true" data-placeholder="写语法、用法、搭配、记忆方法或场景解析……"></div></div>
 <input id="englishTags" type="text" maxlength="120" placeholder="标签，用逗号分隔，例如：四六级,口语,亚麻论文">
 <div class="english-actions"><button id="saveEnglishNote" type="button">保存笔记</button><button id="clearEnglishNote" type="button">清空输入</button></div>
 </div>
