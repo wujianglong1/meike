@@ -14,7 +14,7 @@
 <meta name="theme-color" content="#f4f1ea">
 <title>美刻｜日常计划与生活记录</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="daymark-styles-20260817-87.css?v=80">
+<link rel="stylesheet" href="daymark-styles-20260817-87.css?v=88">
 <link rel="stylesheet" href="translation-guard-20260819-1.css">
 <link rel="stylesheet" href="literature-local-read-20260819-1.css">
 <link rel="stylesheet" href="sidebar-collapse-20260819-1.css">
@@ -31,6 +31,7 @@
 <button class="nav" data-view="secret">⌁　秘密簿</button>
 <button class="nav" data-view="links">↗　网址簿</button>
 <button class="nav" data-view="bookshelf">▤　书架</button>
+<button class="nav" data-view="english">A　英语角</button>
 <button class="nav" data-view="literature">⌑　文献库</button>
 <button class="nav" data-view="history">▦　足迹</button>
 <button class="nav" data-view="styles">✦　外观</button>
@@ -253,6 +254,42 @@
 <div id="bookList" class="book-list"></div>
 <article class="card document-shelf"><div class="heading"><div><em>文档库</em><h2>常用文档</h2><p class="document-subtitle">把需要反复查看的 Word、PPT、PDF 和表格集中放在这里。</p></div><label class="document-add"><span>＋ 添加文档</span><input id="documentFile" type="file" accept=".doc,.docx,.ppt,.pptx,.pdf,.xls,.xlsx,.txt,.md,.rtf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain"></label></div><div id="documentList" class="document-list"></div></article>
 </section>
+<section id="english" class="view">
+<div class="english-head"><div><p class="intro">把单词、句子、语法和灵感都慢慢攒起来。</p><h2>英语角</h2></div><button id="newEnglishNote" type="button">＋ 新笔记</button></div>
+<article class="card english-editor">
+<div class="heading"><div><em>学习笔记</em><h2 id="englishEditorTitle">记录一条英语收获</h2></div><span id="englishSaveState">本机自动保存，可随账户同步</span></div>
+<div class="english-form">
+<input id="englishTitle" type="text" maxlength="80" placeholder="标题，例如：今天的高频表达">
+<select id="englishType" aria-label="笔记类型">
+<option value="note">综合笔记</option>
+<option value="vocab">单词短语</option>
+<option value="sentence">好句摘抄</option>
+<option value="listening">听力</option>
+<option value="speaking">口语</option>
+<option value="writing">写作</option>
+<option value="grammar">语法</option>
+</select>
+<textarea id="englishContent" rows="6" placeholder="写下英文、例句、用法、语法点、听力口语心得……"></textarea>
+<textarea id="englishTranslation" rows="3" placeholder="中文理解 / 翻译 / 自己的解释（可选）"></textarea>
+<input id="englishTags" type="text" maxlength="120" placeholder="标签，用逗号分隔，例如：四六级,口语,亚麻论文">
+<div class="english-actions"><button id="saveEnglishNote" type="button">保存笔记</button><button id="clearEnglishNote" type="button">清空输入</button></div>
+</div>
+</article>
+<div class="english-toolbar">
+<label class="english-search">⌕<input id="englishSearch" type="search" placeholder="搜索标题、正文、翻译或标签"></label>
+<select id="englishTypeFilter" aria-label="筛选英语笔记类型">
+<option value="">全部类型</option>
+<option value="note">综合笔记</option>
+<option value="vocab">单词短语</option>
+<option value="sentence">好句摘抄</option>
+<option value="listening">听力</option>
+<option value="speaking">口语</option>
+<option value="writing">写作</option>
+<option value="grammar">语法</option>
+</select>
+</div>
+<div id="englishList" class="english-list"></div>
+</section>
 <section id="literature" class="view">
 <div class="literature-head"><div><p class="intro">把每一次阅读，慢慢沉淀成自己的研究脉络。</p><h2>文献库</h2></div><button id="newLiterature" type="button">＋ 添加文献</button></div>
 <label id="literatureImport" class="literature-import"><input id="literaturePdf" type="file" accept="application/pdf,.pdf"><span class="literature-import-icon">PDF</span><div><strong>拖入 PDF，自动添加到文献库</strong><small id="literatureImportHint">自动识别题名、作者、年份与 DOI；也可点击选择文件</small></div></label>
@@ -354,6 +391,7 @@ document.getElementById('habitName').addEventListener('keydown',function(e){if(e
     goals: ['志之所趋，无远勿届。','心之所向，素履以往。','把目标放在心里，把脚步落在当下。','方向不必很多，足够清楚就好。'],
     life: ['人间烟火气，最抚凡人心。','生活明朗，万物可爱。','把平凡的日子过得有滋有味。','热爱生活，生活也会回以温柔。'],
     calendar: ['一寸光阴一寸金，寸金难买寸光阴。','明日复明日，明日何其多。','时间只负责流动，我们负责选择。','把今天安排好，就是对明天的尊重。'],
+    english: ['Practice makes progress.','A little progress each day adds up to big results.','把一句话学透，比匆匆看过十句更有力量。','Learn a little, use it a lot.'],
     history: ['以人为镜，可以明得失。','回望来路，是为了走好下一程。','日日行，不怕千万里；常常做，不怕千万事。','所有经历，都会成为脚下的路。'],
     styles: ['美是生活的一种秩序。','风格是你与世界相处的方式。','心有热爱，处处都有光。']
   };
@@ -422,6 +460,7 @@ document.getElementById('habitName').addEventListener('keydown',function(e){if(e
 <script src="link-title-20260817-1.js"></script>
 <script src="bookshelf-20260818-1.js"></script>
 <script src="document-shelf-20260818-1.js"></script>
+<script src="english-corner-20260822-1.js"></script>
 <script src="literature-library-20260819-1.js"></script>
 <script src="sidebar-collapse-20260819-1.js"></script>
 </body>
