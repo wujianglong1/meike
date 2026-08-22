@@ -34,6 +34,32 @@
     box.innerHTML = sanitize(html);
     return box.textContent || '';
   };
+  const plainTextToHtml = text => {
+    const lines = String(text || '').replace(/\r\n?/g, '\n').split('\n');
+    const parts = [];
+    let list = [];
+    const flushList = () => {
+      if (!list.length) return;
+      parts.push(`<ul>${list.map(item => `<li>${esc(item)}</li>`).join('')}</ul>`);
+      list = [];
+    };
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        flushList();
+        return;
+      }
+      const bullet = trimmed.match(/^(?:[-*•·]|\d+[.)、])\s*(.+)$/);
+      if (bullet) {
+        list.push(bullet[1]);
+        return;
+      }
+      flushList();
+      parts.push(`<p>${esc(trimmed)}</p>`);
+    });
+    flushList();
+    return parts.join('') || '<p><br></p>';
+  };
   const read = () => {
     try {
       const value = JSON.parse(localStorage.getItem(key) || '[]');
@@ -206,7 +232,7 @@
       event.preventDefault();
       const html = event.clipboardData?.getData('text/html');
       const text = event.clipboardData?.getData('text/plain');
-      document.execCommand('insertHTML', false, html ? sanitize(html) : esc(text).replace(/\n/g, '<br>'));
+      document.execCommand('insertHTML', false, html ? sanitize(html) : plainTextToHtml(text));
     });
   });
   $('saveEnglishNote')?.addEventListener('click', saveNote);
