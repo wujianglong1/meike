@@ -209,5 +209,22 @@ header h1{display:inline-block;padding:0 7px 3px 3px;background:linear-gradient(
 .time-slot input:focus{border-bottom:1px solid var(--accent)}
 @media(max-width:700px){.time-schedule{grid-template-columns:1fr;gap:6px}.time-slot{grid-template-columns:52px minmax(0,1fr)}}
 
+/* Sidebar must remain usable on short windows. */
+#sidebar{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#ffffff45 transparent;padding-bottom:max(18px,env(safe-area-inset-bottom))}
+#sidebar::-webkit-scrollbar{width:8px}
+#sidebar::-webkit-scrollbar-thumb{background:#ffffff35;border:2px solid transparent;border-radius:999px;background-clip:padding-box}
+#sidebar nav{flex:0 0 auto}
+#sidebar .account-sidebar-top{flex:0 0 auto;margin-bottom:22px}
+#sidebar .sidefoot{flex:0 0 auto;margin-top:22px;padding-bottom:8px}
+#sidebar .sidefoot>button,#sidebar .sidefoot>label{display:block;min-height:30px;line-height:1.35;padding:6px 3px}
+@media(max-height:760px) and (min-width:801px){
+  #sidebar{padding-top:22px;padding-bottom:14px}
+  #sidebar .account-sidebar-top{margin-bottom:16px}
+  #sidebar .nav{padding-top:10px;padding-bottom:10px}
+  #sidebar .streak{padding:10px 0}
+  #sidebar .streak span{font-size:28px}
+  #sidebar .sidefoot{gap:6px;margin-top:16px}
+}
+
 
 
