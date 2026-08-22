@@ -153,10 +153,12 @@
     }
     notes.forEach(note => {
       const card = document.createElement('article');
-      card.className = `card english-note english-note-${note.type || 'note'}`;
+      card.className = `card english-note english-note-${note.type || 'note'} is-collapsed`;
       const tags = (note.tags || []).map(tag => `<span>${esc(tag)}</span>`).join('');
       const sentence = note.sentence || note.content || '';
-      card.innerHTML = `<div class="english-note-main"><div class="english-note-top"><span>${esc(labels[note.type] || labels.note)}</span><small>${esc(dateText(note.updatedAt || note.createdAt))}</small></div><h3>${esc(note.title || '未命名英语笔记')}</h3>${noteSection('例句', sentence, 'english-note-sentence')}${noteSection('译文', note.translation, 'english-note-translation')}${noteSection('解析', note.analysis, 'english-note-analysis')}${noteSection('类似表达', note.similar, 'english-note-similar')}${tags ? `<div class="english-tags">${tags}</div>` : ''}</div><div class="english-note-actions"><button type="button" data-edit="${esc(note.id)}">编辑</button><button type="button" data-delete="${esc(note.id)}">×</button></div>`;
+      const sentenceHtml = noteSection('例句', sentence || '暂无例句', 'english-note-sentence');
+      const detailHtml = `${noteSection('译文', note.translation, 'english-note-translation')}${noteSection('解析', note.analysis, 'english-note-analysis')}${noteSection('类似表达', note.similar, 'english-note-similar')}${tags ? `<div class="english-tags">${tags}</div>` : ''}`;
+      card.innerHTML = `<div class="english-note-main"><div class="english-note-top"><span>${esc(labels[note.type] || labels.note)}</span><small>${esc(dateText(note.updatedAt || note.createdAt))}</small></div><h3>${esc(note.title || '未命名英语笔记')}</h3>${sentenceHtml}<div class="english-note-extra" hidden>${detailHtml || '<div class="english-note-section english-note-empty-detail"><b>补充</b><div>这条笔记还没有译文、解析或类似表达。</div></div>'}</div></div><div class="english-note-actions"><button type="button" data-toggle-note>展开笔记</button><button type="button" data-edit="${esc(note.id)}">编辑</button><button type="button" data-delete="${esc(note.id)}">×</button></div>`;
       list.append(card);
     });
   }
@@ -175,9 +177,19 @@
     const edit = event.target.closest?.('[data-edit]');
     const del = event.target.closest?.('[data-delete]');
     const format = event.target.closest?.('.english-formatbar button');
+    const toggle = event.target.closest?.('[data-toggle-note]');
     if (edit) editNote(edit.dataset.edit);
     if (del) removeNote(del.dataset.delete);
     if (format) applyFormat(format.dataset.command, format.dataset.value || null);
+    if (toggle) {
+      const card = toggle.closest('.english-note');
+      const extra = card?.querySelector('.english-note-extra');
+      const collapsed = !card?.classList.contains('is-collapsed');
+      card?.classList.toggle('is-collapsed', collapsed);
+      card?.classList.toggle('is-expanded', !collapsed);
+      if (extra) extra.hidden = collapsed;
+      toggle.textContent = collapsed ? '展开笔记' : '收起笔记';
+    }
   });
   editorIds.forEach(id => {
     const node = $(id);
