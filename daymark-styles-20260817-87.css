@@ -55,3 +55,5 @@
 #sidebar .sidefoot>button,#sidebar .sidefoot>label{display:block;width:100%;min-height:30px;padding:7px 3px;color:#e5e1d6;line-height:1.35}
 #sidebar .sidefoot>button:hover,#sidebar .sidefoot>label:hover{color:#fff}
 @media(max-height:720px){#sidebar{padding-top:20px;padding-bottom:16px}#sidebar .account-sidebar-top{margin-bottom:12px}#sidebar .nav{padding-block:9px}#sidebar .sidefoot .streak span{font-size:26px}}
+
+.english-note-similar{background:color-mix(in srgb,#98d9b6 9%,var(--card))}

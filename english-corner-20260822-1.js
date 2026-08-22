@@ -2,7 +2,7 @@
   const key = 'meike-english-corner-v1';
   const $ = id => document.getElementById(id);
   const labels = { note: '综合笔记', vocab: '单词短语', sentence: '好句摘抄', listening: '听力', speaking: '口语', writing: '写作', grammar: '语法' };
-  const editorIds = ['englishSentence', 'englishTranslation', 'englishAnalysis'];
+  const editorIds = ['englishSentence', 'englishTranslation', 'englishAnalysis', 'englishSimilar'];
   const translationCollapseKey = 'meike-english-translation-collapsed';
   let editingId = '';
   let activeEditor = null;
@@ -92,16 +92,17 @@
     const sentence = getHtml('englishSentence');
     const translation = getHtml('englishTranslation');
     const analysis = getHtml('englishAnalysis');
+    const similar = getHtml('englishSimilar');
     const tags = tagList($('englishTags')?.value || '');
     const type = $('englishType')?.value || 'note';
-    if (!title && !hasText(sentence, translation, analysis)) {
+    if (!title && !hasText(sentence, translation, analysis, similar)) {
       $('englishSentence')?.focus();
       return toast('先写一点内容，再保存到英语角');
     }
     const now = new Date().toISOString();
     const notes = read();
     const existing = notes.find(item => item.id === editingId);
-    const payload = { title: title || '未命名英语笔记', type, sentence, translation, analysis, content: sentence, tags, updatedAt: now };
+    const payload = { title: title || '未命名英语笔记', type, sentence, translation, analysis, similar, content: sentence, tags, updatedAt: now };
     if (existing) Object.assign(existing, payload);
     else notes.unshift({ id: `en-${Date.now()}-${Math.random().toString(16).slice(2)}`, ...payload, createdAt: now });
     write(notes);
@@ -120,6 +121,7 @@
     setHtml('englishSentence', note.sentence || note.content || '');
     setHtml('englishTranslation', note.translation || '');
     setHtml('englishAnalysis', note.analysis || '');
+    setHtml('englishSimilar', note.similar || '');
     $('englishTags').value = (note.tags || []).join('，');
     $('englishTitle').focus();
     $('english')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -143,7 +145,7 @@
     const type = $('englishTypeFilter')?.value || '';
     let notes = read().slice().sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
     if (type) notes = notes.filter(item => (item.type || 'note') === type);
-    if (query) notes = notes.filter(item => [item.title, strip(item.sentence || item.content), strip(item.translation), strip(item.analysis), ...(item.tags || [])].some(value => String(value || '').toLowerCase().includes(query)));
+    if (query) notes = notes.filter(item => [item.title, strip(item.sentence || item.content), strip(item.translation), strip(item.analysis), strip(item.similar), ...(item.tags || [])].some(value => String(value || '').toLowerCase().includes(query)));
     list.innerHTML = '';
     if (!notes.length) {
       list.innerHTML = '<div class="english-empty">这里还没有英语笔记。可以记录例句、译文、解析，也可以把论文英语表达慢慢攒起来。</div>';
@@ -154,7 +156,7 @@
       card.className = `card english-note english-note-${note.type || 'note'}`;
       const tags = (note.tags || []).map(tag => `<span>${esc(tag)}</span>`).join('');
       const sentence = note.sentence || note.content || '';
-      card.innerHTML = `<div class="english-note-main"><div class="english-note-top"><span>${esc(labels[note.type] || labels.note)}</span><small>${esc(dateText(note.updatedAt || note.createdAt))}</small></div><h3>${esc(note.title || '未命名英语笔记')}</h3>${noteSection('例句', sentence, 'english-note-sentence')}${noteSection('译文', note.translation, 'english-note-translation')}${noteSection('解析', note.analysis, 'english-note-analysis')}${tags ? `<div class="english-tags">${tags}</div>` : ''}</div><div class="english-note-actions"><button type="button" data-edit="${esc(note.id)}">编辑</button><button type="button" data-delete="${esc(note.id)}">×</button></div>`;
+      card.innerHTML = `<div class="english-note-main"><div class="english-note-top"><span>${esc(labels[note.type] || labels.note)}</span><small>${esc(dateText(note.updatedAt || note.createdAt))}</small></div><h3>${esc(note.title || '未命名英语笔记')}</h3>${noteSection('例句', sentence, 'english-note-sentence')}${noteSection('译文', note.translation, 'english-note-translation')}${noteSection('解析', note.analysis, 'english-note-analysis')}${noteSection('类似表达', note.similar, 'english-note-similar')}${tags ? `<div class="english-tags">${tags}</div>` : ''}</div><div class="english-note-actions"><button type="button" data-edit="${esc(note.id)}">编辑</button><button type="button" data-delete="${esc(note.id)}">×</button></div>`;
       list.append(card);
     });
   }
