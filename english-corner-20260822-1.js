@@ -3,6 +3,7 @@
   const $ = id => document.getElementById(id);
   const labels = { note: '综合笔记', vocab: '单词短语', sentence: '好句摘抄', listening: '听力', speaking: '口语', writing: '写作', grammar: '语法' };
   const editorIds = ['englishSentence', 'englishTranslation', 'englishAnalysis'];
+  const translationCollapseKey = 'meike-english-translation-collapsed';
   let editingId = '';
   let activeEditor = null;
   const esc = value => String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -66,6 +67,15 @@
   };
   const getHtml = id => sanitize($(id)?.innerHTML || '');
   const hasText = (...values) => values.some(value => strip(value).trim());
+  function setTranslationCollapsed(collapsed) {
+    const field = $('englishTranslationField');
+    const button = $('toggleEnglishTranslation');
+    if (!field || !button) return;
+    field.classList.toggle('is-collapsed', collapsed);
+    button.textContent = collapsed ? '展开译文' : '收起译文';
+    button.setAttribute('aria-expanded', String(!collapsed));
+    localStorage.setItem(translationCollapseKey, collapsed ? '1' : '0');
+  }
   function clearEditor() {
     editingId = '';
     $('englishEditorTitle').textContent = '记录一条英语收获';
@@ -185,11 +195,13 @@
   $('saveEnglishNote')?.addEventListener('click', saveNote);
   $('clearEnglishNote')?.addEventListener('click', clearEditor);
   $('newEnglishNote')?.addEventListener('click', clearEditor);
+  $('toggleEnglishTranslation')?.addEventListener('click', () => setTranslationCollapsed(!$('englishTranslationField')?.classList.contains('is-collapsed')));
   $('englishSearch')?.addEventListener('input', render);
   $('englishTypeFilter')?.addEventListener('change', render);
   ['englishTitle', 'englishTags'].forEach(id => $(id)?.addEventListener('input', () => {
     const state = $('englishSaveState');
     if (state) state.textContent = '正在编辑，点击保存后同步';
   }));
+  setTranslationCollapsed(localStorage.getItem(translationCollapseKey) === '1');
   render();
 })();
