@@ -72,7 +72,7 @@
     const button = $('toggleEnglishTranslation');
     if (!field || !button) return;
     field.classList.toggle('is-collapsed', collapsed);
-    button.textContent = collapsed ? '展开译文' : '收起译文';
+    button.textContent = collapsed ? '＋ 展开译文' : '− 收起译文';
     button.setAttribute('aria-expanded', String(!collapsed));
     localStorage.setItem(translationCollapseKey, collapsed ? '1' : '0');
   }
