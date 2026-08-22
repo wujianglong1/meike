@@ -107,6 +107,9 @@
     node.focus();
     toast('已整理多余空格');
   }
+  function insertCleanParagraph() {
+    document.execCommand('insertHTML', false, '<p><br></p>');
+  }
   const read = () => {
     try {
       const value = JSON.parse(localStorage.getItem(key) || '[]');
@@ -276,6 +279,11 @@
     const node = $(id);
     if (!node) return;
     node.addEventListener('focus', () => { activeEditor = node; });
+    node.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return;
+      event.preventDefault();
+      insertCleanParagraph();
+    });
     node.addEventListener('input', () => {
       const state = $('englishSaveState');
       if (state) state.textContent = '正在编辑，点击保存后同步';
