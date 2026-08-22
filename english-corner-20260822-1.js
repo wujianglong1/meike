@@ -60,6 +60,31 @@
     flushList();
     return parts.join('') || '<p><br></p>';
   };
+  const cleanHtmlSpacing = html => {
+    const template = document.createElement('template');
+    template.innerHTML = sanitize(html);
+    template.content.querySelectorAll('*').forEach(node => {
+      node.style.marginLeft = '';
+      node.style.paddingLeft = '';
+      node.style.textIndent = '';
+      if (!node.getAttribute('style')) node.removeAttribute('style');
+    });
+    template.content.querySelectorAll('p,div,li,blockquote').forEach(node => {
+      node.innerHTML = node.innerHTML
+        .replace(/^(?:&nbsp;|\s|　)+/g, '')
+        .replace(/<br\s*\/?>\s*(?:&nbsp;|\s|　)*$/gi, '');
+      if (!node.textContent.trim() && !node.querySelector('img')) node.remove();
+    });
+    return template.innerHTML.trim();
+  };
+  function cleanEditorSpacing(target) {
+    const node = target || activeEditor || document.activeElement?.closest?.('.english-rich-input');
+    if (!node) return;
+    node.innerHTML = cleanHtmlSpacing(node.innerHTML);
+    node.dispatchEvent(new Event('input', { bubbles: true }));
+    node.focus();
+    toast('已整理多余空格');
+  }
   const read = () => {
     try {
       const value = JSON.parse(localStorage.getItem(key) || '[]');
@@ -204,9 +229,14 @@
     const del = event.target.closest?.('[data-delete]');
     const format = event.target.closest?.('.english-formatbar button');
     const toggle = event.target.closest?.('[data-toggle-note]');
+    const cleaner = event.target.closest?.('[data-clean-space]');
     if (edit) editNote(edit.dataset.edit);
     if (del) removeNote(del.dataset.delete);
     if (format) applyFormat(format.dataset.command, format.dataset.value || null);
+    if (cleaner) {
+      const target = $(cleaner.closest('.english-formatbar')?.dataset.for);
+      cleanEditorSpacing(target);
+    }
     if (toggle) {
       const card = toggle.closest('.english-note');
       const extra = card?.querySelector('.english-note-extra');
@@ -232,7 +262,7 @@
       event.preventDefault();
       const html = event.clipboardData?.getData('text/html');
       const text = event.clipboardData?.getData('text/plain');
-      document.execCommand('insertHTML', false, html ? sanitize(html) : plainTextToHtml(text));
+      document.execCommand('insertHTML', false, html ? cleanHtmlSpacing(html) : plainTextToHtml(text));
     });
   });
   $('saveEnglishNote')?.addEventListener('click', saveNote);
