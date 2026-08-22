@@ -63,17 +63,39 @@
   const cleanHtmlSpacing = html => {
     const template = document.createElement('template');
     template.innerHTML = sanitize(html);
+    const trimStartIn = node => {
+      for (const child of [...node.childNodes]) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          child.textContent = child.textContent.replace(/^[\s\u00a0\u3000]+/g, '');
+          if (child.textContent.length) return;
+          child.remove();
+          continue;
+        }
+        if (child.nodeType === Node.ELEMENT_NODE) {
+          trimStartIn(child);
+          if ((child.textContent || '').trim()) return;
+          if (!['BR'].includes(child.tagName)) child.remove();
+        }
+      }
+    };
     template.content.querySelectorAll('*').forEach(node => {
       node.style.marginLeft = '';
       node.style.paddingLeft = '';
       node.style.textIndent = '';
+      node.style.textAlign = '';
       if (!node.getAttribute('style')) node.removeAttribute('style');
     });
-    template.content.querySelectorAll('p,div,li,blockquote').forEach(node => {
+    template.content.querySelectorAll('p,div,li,blockquote,span').forEach(node => {
+      trimStartIn(node);
       node.innerHTML = node.innerHTML
         .replace(/^(?:&nbsp;|\s|　)+/g, '')
-        .replace(/<br\s*\/?>\s*(?:&nbsp;|\s|　)*$/gi, '');
+        .replace(/<br\s*\/?>\s*(?:&nbsp;|\s|　)*$/gi, '')
+        .replace(/^(?:<br\s*\/?>)+/gi, '');
       if (!node.textContent.trim() && !node.querySelector('img')) node.remove();
+    });
+    template.content.querySelectorAll('br').forEach(br => {
+      const parent = br.parentElement;
+      if (parent && !parent.textContent.trim() && parent.childNodes.length <= 1) parent.remove();
     });
     return template.innerHTML.trim();
   };
@@ -116,7 +138,7 @@
     const node = $(id);
     if (node) node.innerHTML = sanitize(value);
   };
-  const getHtml = id => sanitize($(id)?.innerHTML || '');
+  const getHtml = id => cleanHtmlSpacing($(id)?.innerHTML || '');
   const hasText = (...values) => values.some(value => strip(value).trim());
   function setTranslationCollapsed(collapsed) {
     const field = $('englishTranslationField');
