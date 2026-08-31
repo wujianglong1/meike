@@ -142,6 +142,7 @@
     if (node) node.innerHTML = sanitize(value);
   };
   const getHtml = id => cleanHtmlSpacing($(id)?.innerHTML || '');
+  const textToHtml = value => String(value || '').split(/\r?\n/).map(line => `<p>${esc(line.trim()) || '<br>'}</p>`).join('');
   const hasText = (...values) => values.some(value => strip(value).trim());
   function setTranslationCollapsed(collapsed) {
     const field = $('englishTranslationField');
@@ -192,7 +193,7 @@
     }
     const now = new Date().toISOString();
     const notes = read();
-    notes.unshift({ id: `phrase-${Date.now()}-${Math.random().toString(16).slice(2)}`, type: 'phrase', title: phrase || '未命名词组', sentence: phrase ? `<p>${esc(phrase)}</p>` : '', translation: meaning ? `<p>${esc(meaning)}</p>` : '', analysis: example ? `<p>${esc(example)}</p>` : '', similar: '', content: phrase ? `<p>${esc(phrase)}</p>` : '', tags, createdAt: now, updatedAt: now });
+    notes.unshift({ id: `phrase-${Date.now()}-${Math.random().toString(16).slice(2)}`, type: 'phrase', title: phrase.split(/\r?\n/).find(Boolean) || '未命名词组', sentence: phrase ? textToHtml(phrase) : '', translation: meaning ? textToHtml(meaning) : '', analysis: example ? textToHtml(example) : '', similar: '', content: phrase ? textToHtml(phrase) : '', tags, createdAt: now, updatedAt: now });
     write(notes);
     return true;
   }
@@ -274,7 +275,7 @@
     const sentence = strip(note.sentence || note.content || '').trim().replace(/\s+/g, ' ');
     const translation = strip(note.translation || '').trim().replace(/\s+/g, ' ');
     const title = strip(note.title || '').trim();
-    return `<aside class="english-inline-phrase" hidden><div><span>词组项</span><h4>从这条笔记摘词组</h4><p>把想记住的表达放到词组库，之后可以集中复习。</p></div><input data-inline-phrase type="text" maxlength="80" placeholder="词组 / 搭配" value="${esc(title && title !== '未命名英语笔记' ? title : '')}"><input data-inline-meaning type="text" maxlength="120" placeholder="含义 / 用法" value="${esc(translation.slice(0, 80))}"><textarea data-inline-example maxlength="220" placeholder="例句 / 语境">${esc(sentence.slice(0, 160))}</textarea><input data-inline-tags type="text" maxlength="120" placeholder="标签，用逗号分隔" value="${esc((note.tags || []).join('，'))}"><button type="button" data-save-inline-phrase>保存到词组库</button></aside>`;
+    return `<aside class="english-inline-phrase" hidden><div><span>词组项</span><h4>从这条笔记摘词组</h4><p>把想记住的表达放到词组库，之后可以集中复习。</p></div><textarea data-inline-phrase maxlength="180" placeholder="词组 / 搭配">${esc(title && title !== '未命名英语笔记' ? title : '')}</textarea><textarea data-inline-meaning maxlength="240" placeholder="含义 / 用法">${esc(translation.slice(0, 120))}</textarea><textarea data-inline-example maxlength="360" placeholder="例句 / 语境">${esc(sentence.slice(0, 180))}</textarea><textarea data-inline-tags maxlength="120" placeholder="标签，用逗号分隔">${esc((note.tags || []).join('，'))}</textarea><button type="button" data-save-inline-phrase>保存到词组库</button></aside>`;
   }
   function ensureInlinePhrase(card) {
     let panel = card?.querySelector('.english-inline-phrase');
