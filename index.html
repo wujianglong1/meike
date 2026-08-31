@@ -259,8 +259,8 @@
 <article class="card english-phrase-bank">
 <div class="heading"><div><em>词组项</em><h2>词组记忆库</h2><p>把想反复记住的短语、固定搭配和地道表达集中放在这里。</p></div><button id="printEnglishPhrases" type="button" class="english-print-phrases">打印词组表</button></div>
 <div class="english-phrase-form">
-<textarea id="englishPhraseText" maxlength="180" placeholder="词组，例如：take a turn for"></textarea>
-<textarea id="englishPhraseMeaning" maxlength="240" placeholder="含义，例如：轮到……；转向……"></textarea>
+<textarea id="englishPhraseText" placeholder="词组，例如：take a turn for"></textarea>
+<textarea id="englishPhraseMeaning" placeholder="含义，例如：轮到……；转向……"></textarea>
 <button id="saveEnglishPhrase" type="button">保存词组</button>
 </div>
 <div id="englishPhraseList" class="english-phrase-list"></div>
@@ -268,7 +268,7 @@
 <article class="card english-editor">
 <div class="heading"><div><em>学习笔记</em><h2 id="englishEditorTitle">记录一条英语收获</h2></div><span id="englishSaveState">本机自动保存，可随账户同步</span></div>
 <div class="english-form">
-<input id="englishTitle" type="text" maxlength="80" placeholder="标题，例如：今天的高频表达">
+<input id="englishTitle" type="text" placeholder="标题，例如：今天的高频表达">
 <select id="englishType" aria-label="笔记类型">
 <option value="note">综合笔记</option>
 <option value="phrase">词组</option>
@@ -283,7 +283,7 @@
 <div id="englishTranslationField" class="english-rich-field english-translation-field"><div class="english-field-title"><label>译文</label><button id="toggleEnglishTranslation" class="english-collapse-button" type="button" aria-expanded="true">− 收起译文</button></div><div class="english-collapsible"><div class="english-formatbar" data-for="englishTranslation"><button type="button" data-command="bold">加粗</button><button type="button" data-command="italic">斜体</button><button type="button" data-command="underline">下划线</button><button type="button" data-command="backColor" data-value="#fff1a8">高亮</button><button type="button" data-command="foreColor" data-value="#d94b4b">红字</button><button type="button" data-command="foreColor" data-value="#2f6fda">蓝字</button><button type="button" data-command="removeFormat">清除格式</button><button type="button" data-clean-space>整理空格</button></div><div id="englishTranslation" class="english-rich-input" contenteditable="true" data-placeholder="写中文译文或自己的理解……"></div></div></div>
 <div class="english-rich-field"><label>解析</label><div class="english-formatbar" data-for="englishAnalysis"><button type="button" data-command="bold">加粗</button><button type="button" data-command="italic">斜体</button><button type="button" data-command="underline">下划线</button><button type="button" data-command="backColor" data-value="#fff1a8">高亮</button><button type="button" data-command="foreColor" data-value="#d94b4b">红字</button><button type="button" data-command="foreColor" data-value="#2f6fda">蓝字</button><button type="button" data-command="insertUnorderedList">列表</button><button type="button" data-command="removeFormat">清除格式</button><button type="button" data-clean-space>整理空格</button></div><div id="englishAnalysis" class="english-rich-input english-rich-input-tall" contenteditable="true" data-placeholder="写语法、用法、搭配、记忆方法或场景解析……"></div></div>
 <div class="english-rich-field"><label>类似表达</label><div class="english-formatbar" data-for="englishSimilar"><button type="button" data-command="bold">加粗</button><button type="button" data-command="italic">斜体</button><button type="button" data-command="underline">下划线</button><button type="button" data-command="backColor" data-value="#fff1a8">高亮</button><button type="button" data-command="foreColor" data-value="#d94b4b">红字</button><button type="button" data-command="foreColor" data-value="#2f6fda">蓝字</button><button type="button" data-command="insertUnorderedList">列表</button><button type="button" data-command="removeFormat">清除格式</button><button type="button" data-clean-space>整理空格</button></div><div id="englishSimilar" class="english-rich-input" contenteditable="true" data-placeholder="写近义表达、替换句型、同类短语或更地道说法……"></div></div>
-<input id="englishTags" type="text" maxlength="120" placeholder="标签，用逗号分隔，例如：四六级,口语,亚麻论文">
+<input id="englishTags" type="text" placeholder="标签，用逗号分隔，例如：四六级,口语,亚麻论文">
 <div class="english-actions"><button id="saveEnglishNote" type="button">保存笔记</button><button id="clearEnglishNote" type="button">清空输入</button></div>
 </div>
 </article>
@@ -394,7 +394,7 @@ window.saveHabitFromBox=function(){var input=document.getElementById('habitName'
 window.quickDeleteHabit=function(name,button){var key='daymark-v1',data;try{data=JSON.parse(localStorage.getItem(key)||'null')}catch(e){}if(data){data.settings=data.settings||{};var defaults=['睡眠达标','运动','阅读学习','喝水','整理环境'];data.settings.habitNames=(data.settings.habitNames||defaults).filter(function(x){return x!==name});Object.keys(data.days||{}).forEach(function(k){if(data.days[k].habits)delete data.days[k].habits[name]});localStorage.setItem(key,JSON.stringify(data))}button.closest('.habit').remove();var total=document.querySelectorAll('#habits .habit').length,done=document.querySelectorAll('#habits input:checked').length;document.getElementById('overviewHabits').textContent=done+' / '+total;document.getElementById('habitProgress').style.width=(total?done/total*100:0)+'%'};
 document.getElementById('habitName').addEventListener('keydown',function(e){if(e.key==='Enter')saveHabitFromBox();if(e.key==='Escape')closeHabitBox()});
 </script>
-<script src="daymark-app-20260817-55.js?v=158">
+<script src="daymark-app-20260817-55.js?v=159">
 </script>
 <script src="translation-guard-20260819-1.js"></script>
 <script>
@@ -473,7 +473,7 @@ document.getElementById('habitName').addEventListener('keydown',function(e){if(e
 <script src="link-title-20260817-1.js"></script>
 <script src="bookshelf-20260818-1.js"></script>
 <script src="document-shelf-20260818-1.js"></script>
-<script src="english-corner-20260822-1.js?v=18"></script>
+<script src="english-corner-20260822-1.js?v=19"></script>
 <script src="literature-library-20260819-1.js"></script>
 <script src="sidebar-collapse-20260819-1.js"></script>
 </body>

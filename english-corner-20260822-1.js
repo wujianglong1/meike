@@ -299,7 +299,7 @@
     const phrase = htmlToPlainLines(note.sentence || note.content || note.title).trim() || note.title || '';
     const meaning = htmlToPlainLines(note.translation || '').trim();
     row.classList.add('is-editing');
-    row.innerHTML = `<td><textarea class="english-phrase-inline-edit" data-phrase-edit-text maxlength="360">${esc(phrase)}</textarea></td><td><textarea class="english-phrase-inline-edit" data-phrase-edit-meaning maxlength="520">${esc(meaning)}</textarea></td><td><div class="english-phrase-actions"><button type="button" data-save-phrase-edit="${esc(id)}">保存</button><button type="button" data-cancel-phrase-edit>取消</button></div></td>`;
+    row.innerHTML = `<td><textarea class="english-phrase-inline-edit" data-phrase-edit-text>${esc(phrase)}</textarea></td><td><textarea class="english-phrase-inline-edit" data-phrase-edit-meaning>${esc(meaning)}</textarea></td><td><div class="english-phrase-actions"><button type="button" data-save-phrase-edit="${esc(id)}">保存</button><button type="button" data-cancel-phrase-edit>取消</button></div></td>`;
     row.querySelector('[data-phrase-edit-text]')?.focus();
   }
   function savePhraseEdit(id, button) {
@@ -357,7 +357,7 @@
   function inlinePhrasePanel(note) {
     const translation = strip(note.translation || '').trim().replace(/\s+/g, ' ');
     const title = strip(note.title || '').trim();
-    return `<aside class="english-inline-phrase" hidden><div><span>词组项</span><h4>从这条笔记摘词组</h4><p>只保留词组和含义，方便集中背诵与打印。</p></div><textarea data-inline-phrase maxlength="180" placeholder="词组 / 搭配">${esc(title && title !== '未命名英语笔记' ? title : '')}</textarea><textarea data-inline-meaning maxlength="240" placeholder="含义 / 用法">${esc(translation.slice(0, 120))}</textarea><button type="button" data-save-inline-phrase>保存到词组库</button></aside>`;
+    return `<aside class="english-inline-phrase" hidden><div><span>词组项</span><h4>从这条笔记摘词组</h4><p>只保留词组和含义，方便集中背诵与打印。</p></div><textarea data-inline-phrase placeholder="词组 / 搭配">${esc(title && title !== '未命名英语笔记' ? title : '')}</textarea><textarea data-inline-meaning placeholder="含义 / 用法">${esc(translation.slice(0, 120))}</textarea><button type="button" data-save-inline-phrase>保存到词组库</button></aside>`;
   }
   function ensureInlinePhrase(card) {
     let panel = card?.querySelector('.english-inline-phrase');
