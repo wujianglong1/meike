@@ -1,5 +1,5 @@
-const CACHE='daymark-shell-20260831-156';
-const FILES=['./','./index.html','./daymark-styles-20260817-87.css','./daymark-styles-20260817-86.css','./daymark-styles-20260817-85.css','./daymark-styles-20260817-84.css','./daymark-styles-20260817-83.css','./daymark-styles-20260817-82.css','./daymark-styles-20260817-81.css','./daymark-app-20260817-55.js','./theme-cycle-20260817-31.js','./weather-forecast-20260817-54.js','./zoom-control-20260817-45.js','./life-journal-20260817-49.js?v=51','./module-controls-20260817-50.js','./daymark-account-20260817-9.js?v=18','./goals-planning-20260817-1.js','./calendar-day-link-20260817-3.js','./time-schedule-20260817-4.js','./page-refresh-20260817-1.js','./bookshelf-20260818-1.js','./document-shelf-20260818-1.js','./english-corner-20260822-1.js?v=17','./literature-library-20260819-1.js','./secret-book-20260817-2.js','./secret-lock-20260818-2.js','./secret-title-20260817-1.js','./link-book-20260817-2.js','./link-title-20260817-1.js','./manifest.webmanifest','./daymark-icon.svg'];
+const CACHE='daymark-shell-20260831-157';
+const FILES=['./','./index.html','./daymark-styles-20260817-87.css','./daymark-styles-20260817-86.css','./daymark-styles-20260817-85.css','./daymark-styles-20260817-84.css','./daymark-styles-20260817-83.css','./daymark-styles-20260817-82.css','./daymark-styles-20260817-81.css','./daymark-app-20260817-55.js?v=157','./theme-cycle-20260817-31.js','./weather-forecast-20260817-54.js','./zoom-control-20260817-45.js','./life-journal-20260817-49.js?v=51','./module-controls-20260817-50.js','./daymark-account-20260817-9.js?v=18','./goals-planning-20260817-1.js','./calendar-day-link-20260817-3.js','./time-schedule-20260817-4.js','./page-refresh-20260817-1.js','./bookshelf-20260818-1.js','./document-shelf-20260818-1.js','./english-corner-20260822-1.js?v=17','./literature-library-20260819-1.js','./secret-book-20260817-2.js','./secret-lock-20260818-2.js','./secret-title-20260817-1.js','./link-book-20260817-2.js','./link-title-20260817-1.js','./manifest.webmanifest','./daymark-icon.svg'];
 FILES.push('./literature-local-read-20260819-1.css');
 FILES.push('./translation-guard-20260819-1.css','./translation-guard-20260819-1.js');
 FILES.push('./sidebar-collapse-20260819-1.css','./sidebar-collapse-20260819-1.js');
@@ -9,5 +9,9 @@ self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET')return;
   const url=new URL(event.request.url);
   if(url.origin!==location.origin)return;
-  event.respondWith(caches.match(event.request).then(cached=>cached||fetch(event.request).then(response=>{const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy));return response}).catch(()=>caches.match('./index.html'))));
+  if(event.request.mode==='navigate'||url.pathname.endsWith('/')||url.pathname.endsWith('/index.html')){
+    event.respondWith(fetch(event.request,{cache:'no-store'}).then(response=>{const copy=response.clone();caches.open(CACHE).then(cache=>cache.put('./index.html',copy));return response}).catch(()=>caches.match('./index.html')));
+    return;
+  }
+  event.respondWith(fetch(event.request).then(response=>{const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy));return response}).catch(()=>caches.match(event.request).then(cached=>cached||caches.match('./index.html'))));
 });
