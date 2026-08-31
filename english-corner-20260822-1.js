@@ -274,7 +274,16 @@
     const sentence = strip(note.sentence || note.content || '').trim().replace(/\s+/g, ' ');
     const translation = strip(note.translation || '').trim().replace(/\s+/g, ' ');
     const title = strip(note.title || '').trim();
-    return `<aside class="english-inline-phrase" hidden style="display:none"><div><span>词组项</span><h4>从这条笔记摘词组</h4><p>把想记住的表达放到词组库，之后可以集中复习。</p></div><input data-inline-phrase type="text" maxlength="80" placeholder="词组 / 搭配" value="${esc(title && title !== '未命名英语笔记' ? title : '')}"><input data-inline-meaning type="text" maxlength="120" placeholder="含义 / 用法" value="${esc(translation.slice(0, 80))}"><textarea data-inline-example maxlength="220" placeholder="例句 / 语境">${esc(sentence.slice(0, 160))}</textarea><input data-inline-tags type="text" maxlength="120" placeholder="标签，用逗号分隔" value="${esc((note.tags || []).join('，'))}"><button type="button" data-save-inline-phrase>保存到词组库</button></aside>`;
+    return `<aside class="english-inline-phrase" hidden><div><span>词组项</span><h4>从这条笔记摘词组</h4><p>把想记住的表达放到词组库，之后可以集中复习。</p></div><input data-inline-phrase type="text" maxlength="80" placeholder="词组 / 搭配" value="${esc(title && title !== '未命名英语笔记' ? title : '')}"><input data-inline-meaning type="text" maxlength="120" placeholder="含义 / 用法" value="${esc(translation.slice(0, 80))}"><textarea data-inline-example maxlength="220" placeholder="例句 / 语境">${esc(sentence.slice(0, 160))}</textarea><input data-inline-tags type="text" maxlength="120" placeholder="标签，用逗号分隔" value="${esc((note.tags || []).join('，'))}"><button type="button" data-save-inline-phrase>保存到词组库</button></aside>`;
+  }
+  function ensureInlinePhrase(card) {
+    let panel = card?.querySelector('.english-inline-phrase');
+    if (panel || !card?.dataset.noteId) return panel;
+    const note = read().find(item => item.id === card.dataset.noteId);
+    if (!note) return null;
+    const actions = card.querySelector('.english-note-actions');
+    actions?.insertAdjacentHTML('beforebegin', inlinePhrasePanel(note));
+    return card.querySelector('.english-inline-phrase');
   }
   function render() {
     const list = $('englishList');
@@ -360,17 +369,17 @@
     if (toggle) {
       const card = toggle.closest('.english-note');
       const extra = card?.querySelector('.english-note-extra');
-      const inlinePhrase = card?.querySelector('.english-inline-phrase');
       const collapsed = !card?.classList.contains('is-collapsed');
       card?.classList.toggle('is-collapsed', collapsed);
       card?.classList.toggle('is-expanded', !collapsed);
+      const inlinePhrase = collapsed ? card?.querySelector('.english-inline-phrase') : ensureInlinePhrase(card);
       if (extra) {
         extra.hidden = collapsed;
         extra.style.display = collapsed ? 'none' : '';
       }
       if (inlinePhrase) {
         inlinePhrase.hidden = collapsed;
-        inlinePhrase.style.display = collapsed ? 'none' : '';
+        inlinePhrase.style.display = collapsed ? 'none' : 'grid';
       }
       toggle.textContent = collapsed ? '展开笔记' : '收起笔记';
     }
