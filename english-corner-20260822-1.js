@@ -150,8 +150,8 @@
     const source = String(value || '').replace(/\r\n?/g, '\n').split('\n').map(line => line.trim()).filter(Boolean).join('\n');
     if (!source) return [];
     return source
-      .replace(/([A-Za-z0-9"'’”)\].,!?;:])\s*([\u3400-\u9fff])/g, '$1\n$2')
-      .replace(/([\u3400-\u9fff。！？；，、）】])\s+([A-Za-z0-9])/g, '$1\n$2')
+      .replace(/([^\u3400-\u9fff\s])\s*([\u3400-\u9fff])/g, '$1\n$2')
+      .replace(/([\u3400-\u9fff。！？；，、）】])\s*([A-Za-z0-9])/g, '$1\n$2')
       .split('\n')
       .map(line => line.trim())
       .filter(Boolean);
@@ -159,9 +159,10 @@
   function mixedLineHtml(value) {
     const lines = splitMixedLines(value);
     if (!lines.length) return '<span class="english-phrase-muted">—</span>';
-    return `<div class="english-phrase-lines">${lines.map(line => {
+    return `<div class="english-phrase-lines" style="display:grid;gap:5px">${lines.map(line => {
       const type = hasCjk(line) && !hasLatin(line) ? 'zh' : hasLatin(line) && !hasCjk(line) ? 'en' : 'mixed';
-      return `<span class="english-phrase-line english-phrase-line-${type}">${esc(line)}</span>`;
+      const style = type === 'zh' ? 'display:block;color:color-mix(in srgb,var(--ink) 72%,var(--muted));font-size:.94em;font-weight:500' : type === 'en' ? 'display:block;color:var(--ink);font-weight:760;letter-spacing:.01em' : 'display:block;color:var(--ink);font-weight:650';
+      return `<span class="english-phrase-line english-phrase-line-${type}" style="${style}">${esc(line)}</span>`;
     }).join('')}</div>`;
   }
   function setTranslationCollapsed(collapsed) {
