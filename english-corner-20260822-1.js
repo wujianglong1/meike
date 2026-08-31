@@ -144,6 +144,26 @@
   const getHtml = id => cleanHtmlSpacing($(id)?.innerHTML || '');
   const textToHtml = value => String(value || '').split(/\r?\n/).map(line => `<p>${esc(line.trim()) || '<br>'}</p>`).join('');
   const hasText = (...values) => values.some(value => strip(value).trim());
+  const hasCjk = text => /[\u3400-\u9fff]/.test(String(text || ''));
+  const hasLatin = text => /[A-Za-z]/.test(String(text || ''));
+  function splitMixedLines(value) {
+    const source = String(value || '').replace(/\r\n?/g, '\n').split('\n').map(line => line.trim()).filter(Boolean).join('\n');
+    if (!source) return [];
+    return source
+      .replace(/([A-Za-z0-9"'’”)\].,!?;:])\s*([\u3400-\u9fff])/g, '$1\n$2')
+      .replace(/([\u3400-\u9fff。！？；，、）】])\s+([A-Za-z0-9])/g, '$1\n$2')
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean);
+  }
+  function mixedLineHtml(value) {
+    const lines = splitMixedLines(value);
+    if (!lines.length) return '<span class="english-phrase-muted">—</span>';
+    return `<div class="english-phrase-lines">${lines.map(line => {
+      const type = hasCjk(line) && !hasLatin(line) ? 'zh' : hasLatin(line) && !hasCjk(line) ? 'en' : 'mixed';
+      return `<span class="english-phrase-line english-phrase-line-${type}">${esc(line)}</span>`;
+    }).join('')}</div>`;
+  }
   function setTranslationCollapsed(collapsed) {
     const field = $('englishTranslationField');
     const button = $('toggleEnglishTranslation');
@@ -324,7 +344,7 @@
       const row = document.createElement('tr');
       const phrase = strip(note.sentence || note.content || note.title).trim() || note.title || '未命名词组';
       const meaning = strip(note.translation || '').trim();
-      row.innerHTML = `<td class="english-phrase-cell-main"><strong>${esc(phrase)}</strong></td><td>${meaning ? esc(meaning) : '<span class="english-phrase-muted">—</span>'}</td><td><div class="english-phrase-actions"><button type="button" data-edit-phrase="${esc(note.id)}">编辑</button><button type="button" data-delete-phrase="${esc(note.id)}">删除</button></div></td>`;
+      row.innerHTML = `<td class="english-phrase-cell-main">${mixedLineHtml(phrase)}</td><td>${mixedLineHtml(meaning)}</td><td><div class="english-phrase-actions"><button type="button" data-edit-phrase="${esc(note.id)}">编辑</button><button type="button" data-delete-phrase="${esc(note.id)}">删除</button></div></td>`;
       body?.append(row);
     });
   }
