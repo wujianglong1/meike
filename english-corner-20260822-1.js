@@ -200,14 +200,12 @@
   function savePhrase() {
     const phrase = $('englishPhraseText')?.value.trim() || '';
     const meaning = $('englishPhraseMeaning')?.value.trim() || '';
-    const example = $('englishPhraseExample')?.value.trim() || '';
-    const tags = tagList($('englishPhraseTags')?.value || '');
     if (!phrase && !meaning) {
       $('englishPhraseText')?.focus();
       return toast('先写一个想记住的词组');
     }
-    if (!createPhraseNote({ phrase, meaning, example, tags })) return;
-    ['englishPhraseText', 'englishPhraseMeaning', 'englishPhraseExample', 'englishPhraseTags'].forEach(id => { if ($(id)) $(id).value = ''; });
+    if (!createPhraseNote({ phrase, meaning, example: '', tags: [] })) return;
+    ['englishPhraseText', 'englishPhraseMeaning'].forEach(id => { if ($(id)) $(id).value = ''; });
     render();
     toast('词组已加入记忆库');
   }
@@ -216,13 +214,11 @@
     if (!panel) return;
     const phrase = panel.querySelector('[data-inline-phrase]')?.value.trim() || '';
     const meaning = panel.querySelector('[data-inline-meaning]')?.value.trim() || '';
-    const example = panel.querySelector('[data-inline-example]')?.value.trim() || '';
-    const tags = tagList(panel.querySelector('[data-inline-tags]')?.value || '');
     if (!phrase && !meaning) {
       panel.querySelector('[data-inline-phrase]')?.focus();
       return toast('先写一个想记住的词组');
     }
-    if (!createPhraseNote({ phrase, meaning, example, tags })) return;
+    if (!createPhraseNote({ phrase, meaning, example: '', tags: [] })) return;
     render();
     toast('已从这条笔记加入词组库');
   }
@@ -231,8 +227,6 @@
     if (!note) return;
     $('englishPhraseText').value = strip(note.sentence || note.content || note.title || '').trim();
     $('englishPhraseMeaning').value = strip(note.translation || '').trim();
-    $('englishPhraseExample').value = strip(note.analysis || '').trim();
-    $('englishPhraseTags').value = (note.tags || []).join('，');
     removePhrase(id, false);
     $('englishPhraseText')?.focus();
   }
@@ -272,10 +266,9 @@
     return `<section class="english-note-section ${className}"><b>${title}</b><div>${sanitize(html)}</div></section>`;
   }
   function inlinePhrasePanel(note) {
-    const sentence = strip(note.sentence || note.content || '').trim().replace(/\s+/g, ' ');
     const translation = strip(note.translation || '').trim().replace(/\s+/g, ' ');
     const title = strip(note.title || '').trim();
-    return `<aside class="english-inline-phrase" hidden><div><span>词组项</span><h4>从这条笔记摘词组</h4><p>把想记住的表达放到词组库，之后可以集中复习。</p></div><textarea data-inline-phrase maxlength="180" placeholder="词组 / 搭配">${esc(title && title !== '未命名英语笔记' ? title : '')}</textarea><textarea data-inline-meaning maxlength="240" placeholder="含义 / 用法">${esc(translation.slice(0, 120))}</textarea><textarea data-inline-example maxlength="360" placeholder="例句 / 语境">${esc(sentence.slice(0, 180))}</textarea><textarea data-inline-tags maxlength="120" placeholder="标签，用逗号分隔">${esc((note.tags || []).join('，'))}</textarea><button type="button" data-save-inline-phrase>保存到词组库</button></aside>`;
+    return `<aside class="english-inline-phrase" hidden><div><span>词组项</span><h4>从这条笔记摘词组</h4><p>只保留词组和含义，方便集中背诵与打印。</p></div><textarea data-inline-phrase maxlength="180" placeholder="词组 / 搭配">${esc(title && title !== '未命名英语笔记' ? title : '')}</textarea><textarea data-inline-meaning maxlength="240" placeholder="含义 / 用法">${esc(translation.slice(0, 120))}</textarea><button type="button" data-save-inline-phrase>保存到词组库</button></aside>`;
   }
   function ensureInlinePhrase(card) {
     let panel = card?.querySelector('.english-inline-phrase');
@@ -325,15 +318,13 @@
       return;
     }
     const phrases = read().filter(item => (item.type || '') === 'phrase').filter(item => !query || [item.title, strip(item.sentence || item.content), strip(item.translation), strip(item.analysis), ...(item.tags || [])].some(value => String(value || '').toLowerCase().includes(query))).sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
-    list.innerHTML = phrases.length ? '<table class="english-phrase-table"><thead><tr><th>词组</th><th>含义</th><th>例句</th><th>标签</th><th>操作</th></tr></thead><tbody></tbody></table>' : '<div class="english-phrase-empty">还没有词组。看到想记住的表达，就先丢到这里。</div>';
+    list.innerHTML = phrases.length ? '<table class="english-phrase-table"><thead><tr><th>词组</th><th>含义</th><th>操作</th></tr></thead><tbody></tbody></table>' : '<div class="english-phrase-empty">还没有词组。看到想记住的表达，就先丢到这里。</div>';
     const body = list.querySelector('tbody');
     phrases.forEach(note => {
       const row = document.createElement('tr');
       const phrase = strip(note.sentence || note.content || note.title).trim() || note.title || '未命名词组';
       const meaning = strip(note.translation || '').trim();
-      const example = strip(note.analysis || '').trim();
-      const tags = (note.tags || []).map(tag => `<span>${esc(tag)}</span>`).join('');
-      row.innerHTML = `<td class="english-phrase-cell-main"><strong>${esc(phrase)}</strong></td><td>${meaning ? esc(meaning) : '<span class="english-phrase-muted">—</span>'}</td><td>${example ? esc(example) : '<span class="english-phrase-muted">—</span>'}</td><td><div class="english-tags">${tags || '<span>未分类</span>'}</div></td><td><div class="english-phrase-actions"><button type="button" data-edit-phrase="${esc(note.id)}">编辑</button><button type="button" data-delete-phrase="${esc(note.id)}">删除</button></div></td>`;
+      row.innerHTML = `<td class="english-phrase-cell-main"><strong>${esc(phrase)}</strong></td><td>${meaning ? esc(meaning) : '<span class="english-phrase-muted">—</span>'}</td><td><div class="english-phrase-actions"><button type="button" data-edit-phrase="${esc(note.id)}">编辑</button><button type="button" data-delete-phrase="${esc(note.id)}">删除</button></div></td>`;
       body?.append(row);
     });
   }
