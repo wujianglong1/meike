@@ -325,16 +325,16 @@
       return;
     }
     const phrases = read().filter(item => (item.type || '') === 'phrase').filter(item => !query || [item.title, strip(item.sentence || item.content), strip(item.translation), strip(item.analysis), ...(item.tags || [])].some(value => String(value || '').toLowerCase().includes(query))).sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
-    list.innerHTML = phrases.length ? '' : '<div class="english-phrase-empty">还没有词组。看到想记住的表达，就先丢到这里。</div>';
+    list.innerHTML = phrases.length ? '<table class="english-phrase-table"><thead><tr><th>词组</th><th>含义</th><th>例句</th><th>标签</th><th>操作</th></tr></thead><tbody></tbody></table>' : '<div class="english-phrase-empty">还没有词组。看到想记住的表达，就先丢到这里。</div>';
+    const body = list.querySelector('tbody');
     phrases.forEach(note => {
-      const card = document.createElement('div');
-      card.className = 'english-phrase-card';
+      const row = document.createElement('tr');
       const phrase = strip(note.sentence || note.content || note.title).trim() || note.title || '未命名词组';
       const meaning = strip(note.translation || '').trim();
       const example = strip(note.analysis || '').trim();
       const tags = (note.tags || []).map(tag => `<span>${esc(tag)}</span>`).join('');
-      card.innerHTML = `<div><strong>${esc(phrase)}</strong>${meaning ? `<p>${esc(meaning)}</p>` : ''}${example ? `<small>${esc(example)}</small>` : ''}${tags ? `<div class="english-tags">${tags}</div>` : ''}</div><div class="english-phrase-actions"><button type="button" data-edit-phrase="${esc(note.id)}">编辑</button><button type="button" data-delete-phrase="${esc(note.id)}">×</button></div>`;
-      list.append(card);
+      row.innerHTML = `<td class="english-phrase-cell-main"><strong>${esc(phrase)}</strong></td><td>${meaning ? esc(meaning) : '<span class="english-phrase-muted">—</span>'}</td><td>${example ? esc(example) : '<span class="english-phrase-muted">—</span>'}</td><td><div class="english-tags">${tags || '<span>未分类</span>'}</div></td><td><div class="english-phrase-actions"><button type="button" data-edit-phrase="${esc(note.id)}">编辑</button><button type="button" data-delete-phrase="${esc(note.id)}">删除</button></div></td>`;
+      body?.append(row);
     });
   }
   function applyFormat(command, value) {
@@ -407,6 +407,7 @@
   });
   $('saveEnglishNote')?.addEventListener('click', saveNote);
   $('saveEnglishPhrase')?.addEventListener('click', savePhrase);
+  $('printEnglishPhrases')?.addEventListener('click', () => window.print());
   $('clearEnglishNote')?.addEventListener('click', clearEditor);
   $('newEnglishNote')?.addEventListener('click', clearEditor);
   $('toggleEnglishTranslation')?.addEventListener('click', () => setTranslationCollapsed(!$('englishTranslationField')?.classList.contains('is-collapsed')));
