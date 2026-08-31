@@ -186,6 +186,16 @@
     render();
     toast('英语笔记已保存');
   }
+  function createPhraseNote({ phrase = '', meaning = '', example = '', tags = [] } = {}) {
+    if (!phrase && !meaning) {
+      return toast('先写一个想记住的词组');
+    }
+    const now = new Date().toISOString();
+    const notes = read();
+    notes.unshift({ id: `phrase-${Date.now()}-${Math.random().toString(16).slice(2)}`, type: 'phrase', title: phrase || '未命名词组', sentence: phrase ? `<p>${esc(phrase)}</p>` : '', translation: meaning ? `<p>${esc(meaning)}</p>` : '', analysis: example ? `<p>${esc(example)}</p>` : '', similar: '', content: phrase ? `<p>${esc(phrase)}</p>` : '', tags, createdAt: now, updatedAt: now });
+    write(notes);
+    return true;
+  }
   function savePhrase() {
     const phrase = $('englishPhraseText')?.value.trim() || '';
     const meaning = $('englishPhraseMeaning')?.value.trim() || '';
@@ -195,13 +205,25 @@
       $('englishPhraseText')?.focus();
       return toast('先写一个想记住的词组');
     }
-    const now = new Date().toISOString();
-    const notes = read();
-    notes.unshift({ id: `phrase-${Date.now()}-${Math.random().toString(16).slice(2)}`, type: 'phrase', title: phrase || '未命名词组', sentence: phrase ? `<p>${esc(phrase)}</p>` : '', translation: meaning ? `<p>${esc(meaning)}</p>` : '', analysis: example ? `<p>${esc(example)}</p>` : '', similar: '', content: phrase ? `<p>${esc(phrase)}</p>` : '', tags, createdAt: now, updatedAt: now });
-    write(notes);
+    if (!createPhraseNote({ phrase, meaning, example, tags })) return;
     ['englishPhraseText', 'englishPhraseMeaning', 'englishPhraseExample', 'englishPhraseTags'].forEach(id => { if ($(id)) $(id).value = ''; });
     render();
     toast('词组已加入记忆库');
+  }
+  function saveInlinePhrase(button) {
+    const panel = button.closest('.english-inline-phrase');
+    if (!panel) return;
+    const phrase = panel.querySelector('[data-inline-phrase]')?.value.trim() || '';
+    const meaning = panel.querySelector('[data-inline-meaning]')?.value.trim() || '';
+    const example = panel.querySelector('[data-inline-example]')?.value.trim() || '';
+    const tags = tagList(panel.querySelector('[data-inline-tags]')?.value || '');
+    if (!phrase && !meaning) {
+      panel.querySelector('[data-inline-phrase]')?.focus();
+      return toast('先写一个想记住的词组');
+    }
+    if (!createPhraseNote({ phrase, meaning, example, tags })) return;
+    render();
+    toast('已从这条笔记加入词组库');
   }
   function editPhrase(id) {
     const note = read().find(item => item.id === id);
@@ -248,6 +270,12 @@
     if (!strip(html).trim()) return '';
     return `<section class="english-note-section ${className}"><b>${title}</b><div>${sanitize(html)}</div></section>`;
   }
+  function inlinePhrasePanel(note) {
+    const sentence = strip(note.sentence || note.content || '').trim().replace(/\s+/g, ' ');
+    const translation = strip(note.translation || '').trim().replace(/\s+/g, ' ');
+    const title = strip(note.title || '').trim();
+    return `<aside class="english-inline-phrase" hidden style="display:none"><div><span>词组项</span><h4>从这条笔记摘词组</h4><p>把想记住的表达放到词组库，之后可以集中复习。</p></div><input data-inline-phrase type="text" maxlength="80" placeholder="词组 / 搭配" value="${esc(title && title !== '未命名英语笔记' ? title : '')}"><input data-inline-meaning type="text" maxlength="120" placeholder="含义 / 用法" value="${esc(translation.slice(0, 80))}"><textarea data-inline-example maxlength="220" placeholder="例句 / 语境">${esc(sentence.slice(0, 160))}</textarea><input data-inline-tags type="text" maxlength="120" placeholder="标签，用逗号分隔" value="${esc((note.tags || []).join('，'))}"><button type="button" data-save-inline-phrase>保存到词组库</button></aside>`;
+  }
   function render() {
     const list = $('englishList');
     if (!list) return;
@@ -269,11 +297,12 @@
     notes.forEach(note => {
       const card = document.createElement('article');
       card.className = `card english-note english-note-${note.type || 'note'} is-collapsed`;
+      card.dataset.noteId = note.id;
       const tags = (note.tags || []).map(tag => `<span>${esc(tag)}</span>`).join('');
       const sentence = note.sentence || note.content || '';
       const sentenceHtml = noteSection('例句', sentence || '暂无例句', 'english-note-sentence');
       const detailHtml = `${noteSection('译文', note.translation, 'english-note-translation')}${noteSection('解析', note.analysis, 'english-note-analysis')}${noteSection('类似表达', note.similar, 'english-note-similar')}${tags ? `<div class="english-tags">${tags}</div>` : ''}`;
-      card.innerHTML = `<div class="english-note-main"><div class="english-note-top"><span>${esc(labels[note.type] || labels.note)}</span><small>${esc(dateText(note.updatedAt || note.createdAt))}</small></div><h3>${esc(note.title || '未命名英语笔记')}</h3>${sentenceHtml}<div class="english-note-extra" hidden style="display:none">${detailHtml || '<div class="english-note-section english-note-empty-detail"><b>补充</b><div>这条笔记还没有译文、解析或类似表达。</div></div>'}</div></div><div class="english-note-actions"><button type="button" data-toggle-note>展开笔记</button><button type="button" data-edit="${esc(note.id)}">编辑</button><button type="button" data-delete="${esc(note.id)}">×</button></div>`;
+      card.innerHTML = `<div class="english-note-main"><div class="english-note-top"><span>${esc(labels[note.type] || labels.note)}</span><small>${esc(dateText(note.updatedAt || note.createdAt))}</small></div><h3>${esc(note.title || '未命名英语笔记')}</h3>${sentenceHtml}<div class="english-note-extra" hidden style="display:none">${detailHtml || '<div class="english-note-section english-note-empty-detail"><b>补充</b><div>这条笔记还没有译文、解析或类似表达。</div></div>'}</div></div>${inlinePhrasePanel(note)}<div class="english-note-actions"><button type="button" data-toggle-note>展开笔记</button><button type="button" data-edit="${esc(note.id)}">编辑</button><button type="button" data-delete="${esc(note.id)}">×</button></div>`;
       list.append(card);
     });
   }
@@ -317,10 +346,12 @@
     const cleaner = event.target.closest?.('[data-clean-space]');
     const editPhraseButton = event.target.closest?.('[data-edit-phrase]');
     const deletePhraseButton = event.target.closest?.('[data-delete-phrase]');
+    const saveInlinePhraseButton = event.target.closest?.('[data-save-inline-phrase]');
     if (edit) editNote(edit.dataset.edit);
     if (del) removeNote(del.dataset.delete);
     if (editPhraseButton) editPhrase(editPhraseButton.dataset.editPhrase);
     if (deletePhraseButton) removePhrase(deletePhraseButton.dataset.deletePhrase);
+    if (saveInlinePhraseButton) saveInlinePhrase(saveInlinePhraseButton);
     if (format) applyFormat(format.dataset.command, format.dataset.value || null);
     if (cleaner) {
       const target = $(cleaner.closest('.english-formatbar')?.dataset.for);
@@ -329,12 +360,17 @@
     if (toggle) {
       const card = toggle.closest('.english-note');
       const extra = card?.querySelector('.english-note-extra');
+      const inlinePhrase = card?.querySelector('.english-inline-phrase');
       const collapsed = !card?.classList.contains('is-collapsed');
       card?.classList.toggle('is-collapsed', collapsed);
       card?.classList.toggle('is-expanded', !collapsed);
       if (extra) {
         extra.hidden = collapsed;
         extra.style.display = collapsed ? 'none' : '';
+      }
+      if (inlinePhrase) {
+        inlinePhrase.hidden = collapsed;
+        inlinePhrase.style.display = collapsed ? 'none' : '';
       }
       toggle.textContent = collapsed ? '展开笔记' : '收起笔记';
     }
