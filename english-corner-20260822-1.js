@@ -143,6 +143,21 @@
   };
   const getHtml = id => cleanHtmlSpacing($(id)?.innerHTML || '');
   const textToHtml = value => String(value || '').split(/\r?\n/).map(line => `<p>${esc(line.trim()) || '<br>'}</p>`).join('');
+  const htmlToPlainLines = html => String(html || '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(?:p|div|li|h[1-6]|blockquote)>/gi, '\n')
+    .replace(/<(?:p|div|li|h[1-6]|blockquote)[^>]*>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .split(/\n+/)
+    .map(line => line.trim())
+    .filter(Boolean)
+    .join('\n');
   const hasText = (...values) => values.some(value => strip(value).trim());
   const hasCjk = text => /[\u3400-\u9fff]/.test(String(text || ''));
   const hasLatin = text => /[A-Za-z]/.test(String(text || ''));
@@ -150,8 +165,8 @@
     const source = String(value || '').replace(/\r\n?/g, '\n').split('\n').map(line => line.trim()).filter(Boolean).join('\n');
     if (!source) return [];
     return source
-      .replace(/([^\u3400-\u9fff\s])\s*([\u3400-\u9fff])/g, '$1\n$2')
-      .replace(/([\u3400-\u9fff。！？；，、）】])\s*([A-Za-z0-9])/g, '$1\n$2')
+      .replace(/([A-Za-z0-9][.!?;:]?)\s*([\u3400-\u9fff])/g, '$1\n$2')
+      .replace(/([\u3400-\u9fff])\s*([A-Za-z0-9])/g, '$1\n$2')
       .split('\n')
       .map(line => line.trim())
       .filter(Boolean);
@@ -243,13 +258,33 @@
     render();
     toast('已从这条笔记加入词组库');
   }
-  function editPhrase(id) {
+  function editPhrase(id, button) {
     const note = read().find(item => item.id === id);
     if (!note) return;
-    $('englishPhraseText').value = strip(note.sentence || note.content || note.title || '').trim();
-    $('englishPhraseMeaning').value = strip(note.translation || '').trim();
-    removePhrase(id, false);
-    $('englishPhraseText')?.focus();
+    const row = button?.closest?.('tr');
+    if (!row) return;
+    const phrase = htmlToPlainLines(note.sentence || note.content || note.title).trim() || note.title || '';
+    const meaning = htmlToPlainLines(note.translation || '').trim();
+    row.classList.add('is-editing');
+    row.innerHTML = `<td><textarea class="english-phrase-inline-edit" data-phrase-edit-text maxlength="360">${esc(phrase)}</textarea></td><td><textarea class="english-phrase-inline-edit" data-phrase-edit-meaning maxlength="520">${esc(meaning)}</textarea></td><td><div class="english-phrase-actions"><button type="button" data-save-phrase-edit="${esc(id)}">保存</button><button type="button" data-cancel-phrase-edit>取消</button></div></td>`;
+    row.querySelector('[data-phrase-edit-text]')?.focus();
+  }
+  function savePhraseEdit(id, button) {
+    const row = button?.closest?.('tr');
+    const phrase = row?.querySelector('[data-phrase-edit-text]')?.value.trim() || '';
+    const meaning = row?.querySelector('[data-phrase-edit-meaning]')?.value.trim() || '';
+    if (!phrase && !meaning) return toast('先写一个想记住的词组');
+    const notes = read();
+    const note = notes.find(item => item.id === id);
+    if (!note) return;
+    note.title = phrase.split(/\r?\n/).find(Boolean) || '未命名词组';
+    note.sentence = phrase ? textToHtml(phrase) : '';
+    note.content = note.sentence;
+    note.translation = meaning ? textToHtml(meaning) : '';
+    note.updatedAt = new Date().toISOString();
+    write(notes);
+    render();
+    toast('词组已更新');
   }
   function removePhrase(id, ask = true) {
     const note = read().find(item => item.id === id);
@@ -343,8 +378,8 @@
     const body = list.querySelector('tbody');
     phrases.forEach(note => {
       const row = document.createElement('tr');
-      const phrase = strip(note.sentence || note.content || note.title).trim() || note.title || '未命名词组';
-      const meaning = strip(note.translation || '').trim();
+      const phrase = htmlToPlainLines(note.sentence || note.content || note.title).trim() || note.title || '未命名词组';
+      const meaning = htmlToPlainLines(note.translation || '').trim();
       row.innerHTML = `<td class="english-phrase-cell-main">${mixedLineHtml(phrase)}</td><td>${mixedLineHtml(meaning)}</td><td><div class="english-phrase-actions"><button type="button" data-edit-phrase="${esc(note.id)}">编辑</button><button type="button" data-delete-phrase="${esc(note.id)}">删除</button></div></td>`;
       body?.append(row);
     });
@@ -368,10 +403,14 @@
     const cleaner = event.target.closest?.('[data-clean-space]');
     const editPhraseButton = event.target.closest?.('[data-edit-phrase]');
     const deletePhraseButton = event.target.closest?.('[data-delete-phrase]');
+    const savePhraseEditButton = event.target.closest?.('[data-save-phrase-edit]');
+    const cancelPhraseEditButton = event.target.closest?.('[data-cancel-phrase-edit]');
     const saveInlinePhraseButton = event.target.closest?.('[data-save-inline-phrase]');
     if (edit) editNote(edit.dataset.edit);
     if (del) removeNote(del.dataset.delete);
-    if (editPhraseButton) editPhrase(editPhraseButton.dataset.editPhrase);
+    if (editPhraseButton) editPhrase(editPhraseButton.dataset.editPhrase, editPhraseButton);
+    if (savePhraseEditButton) savePhraseEdit(savePhraseEditButton.dataset.savePhraseEdit, savePhraseEditButton);
+    if (cancelPhraseEditButton) render();
     if (deletePhraseButton) removePhrase(deletePhraseButton.dataset.deletePhrase);
     if (saveInlinePhraseButton) saveInlinePhrase(saveInlinePhraseButton);
     if (format) applyFormat(format.dataset.command, format.dataset.value || null);
