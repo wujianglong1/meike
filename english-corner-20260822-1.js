@@ -180,6 +180,35 @@
       return `<span class="english-phrase-line english-phrase-line-${type}" style="${style}">${esc(line)}</span>`;
     }).join('')}</div>`;
   }
+  const normalizePhraseText = value => String(value || '').toLowerCase().replace(/\s+/g, ' ').replace(/[，。！？；、“”‘’"']/g, '').trim();
+  const phraseIdentity = (phrase, meaning) => `${normalizePhraseText(phrase)}::${normalizePhraseText(meaning)}`;
+  const phraseIdentityFromNote = note => phraseIdentity(htmlToPlainLines(note?.sentence || note?.content || note?.title), htmlToPlainLines(note?.translation || ''));
+  function dedupePhrases(notes = read(), shouldWrite = true) {
+    const best = new Map();
+    const duplicates = new Set();
+    notes.forEach((note, index) => {
+      if ((note?.type || '') !== 'phrase') return;
+      const id = phraseIdentityFromNote(note);
+      if (!id || id === '::') return;
+      const old = best.get(id);
+      if (!old) {
+        best.set(id, { note, index });
+        return;
+      }
+      const oldTime = Number(new Date(old.note.updatedAt || old.note.createdAt || 0));
+      const newTime = Number(new Date(note.updatedAt || note.createdAt || 0));
+      if (newTime >= oldTime) {
+        duplicates.add(old.note.id);
+        best.set(id, { note, index });
+      } else {
+        duplicates.add(note.id);
+      }
+    });
+    if (!duplicates.size) return notes;
+    const cleaned = notes.filter(note => !duplicates.has(note?.id));
+    if (shouldWrite) write(cleaned);
+    return cleaned;
+  }
   function setTranslationCollapsed(collapsed) {
     const field = $('englishTranslationField');
     const button = $('toggleEnglishTranslation');
@@ -228,9 +257,13 @@
       return toast('先写一个想记住的词组');
     }
     const now = new Date().toISOString();
-    const notes = read();
-    notes.unshift({ id: `phrase-${Date.now()}-${Math.random().toString(16).slice(2)}`, type: 'phrase', title: phrase.split(/\r?\n/).find(Boolean) || '未命名词组', sentence: phrase ? textToHtml(phrase) : '', translation: meaning ? textToHtml(meaning) : '', analysis: example ? textToHtml(example) : '', similar: '', content: phrase ? textToHtml(phrase) : '', tags, createdAt: now, updatedAt: now });
-    write(notes);
+    const notes = dedupePhrases(read(), false);
+    const identity = phraseIdentity(phrase, meaning);
+    const existing = notes.find(item => (item.type || '') === 'phrase' && phraseIdentityFromNote(item) === identity);
+    const payload = { type: 'phrase', title: phrase.split(/\r?\n/).find(Boolean) || '未命名词组', sentence: phrase ? textToHtml(phrase) : '', translation: meaning ? textToHtml(meaning) : '', analysis: example ? textToHtml(example) : '', similar: '', content: phrase ? textToHtml(phrase) : '', tags, updatedAt: now };
+    if (existing) Object.assign(existing, payload);
+    else notes.unshift({ id: `phrase-${Date.now()}-${Math.random().toString(16).slice(2)}`, ...payload, createdAt: now });
+    write(dedupePhrases(notes, false));
     return true;
   }
   function savePhrase() {
@@ -282,7 +315,7 @@
     note.content = note.sentence;
     note.translation = meaning ? textToHtml(meaning) : '';
     note.updatedAt = new Date().toISOString();
-    write(notes);
+    write(dedupePhrases(notes, false));
     render();
     toast('词组已更新');
   }
@@ -373,7 +406,7 @@
       list.innerHTML = '';
       return;
     }
-    const phrases = read().filter(item => (item.type || '') === 'phrase').filter(item => !query || [item.title, strip(item.sentence || item.content), strip(item.translation), strip(item.analysis), ...(item.tags || [])].some(value => String(value || '').toLowerCase().includes(query))).sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
+    const phrases = dedupePhrases().filter(item => (item.type || '') === 'phrase').filter(item => !query || [item.title, strip(item.sentence || item.content), strip(item.translation), strip(item.analysis), ...(item.tags || [])].some(value => String(value || '').toLowerCase().includes(query))).sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
     list.innerHTML = phrases.length ? '<table class="english-phrase-table"><thead><tr><th>词组</th><th>含义</th><th>操作</th></tr></thead><tbody></tbody></table>' : '<div class="english-phrase-empty">还没有词组。看到想记住的表达，就先丢到这里。</div>';
     const body = list.querySelector('tbody');
     phrases.forEach(note => {
@@ -469,5 +502,6 @@
     if (state) state.textContent = '正在编辑，点击保存后同步';
   }));
   setTranslationCollapsed(localStorage.getItem(translationCollapseKey) === '1');
+  dedupePhrases();
   render();
 })();
