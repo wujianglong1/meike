@@ -394,7 +394,7 @@ window.saveHabitFromBox=function(){var input=document.getElementById('habitName'
 window.quickDeleteHabit=function(name,button){var key='daymark-v1',data;try{data=JSON.parse(localStorage.getItem(key)||'null')}catch(e){}if(data){data.settings=data.settings||{};var defaults=['睡眠达标','运动','阅读学习','喝水','整理环境'];data.settings.habitNames=(data.settings.habitNames||defaults).filter(function(x){return x!==name});Object.keys(data.days||{}).forEach(function(k){if(data.days[k].habits)delete data.days[k].habits[name]});localStorage.setItem(key,JSON.stringify(data))}button.closest('.habit').remove();var total=document.querySelectorAll('#habits .habit').length,done=document.querySelectorAll('#habits input:checked').length;document.getElementById('overviewHabits').textContent=done+' / '+total;document.getElementById('habitProgress').style.width=(total?done/total*100:0)+'%'};
 document.getElementById('habitName').addEventListener('keydown',function(e){if(e.key==='Enter')saveHabitFromBox();if(e.key==='Escape')closeHabitBox()});
 </script>
-<script src="daymark-app-20260817-55.js?v=159">
+<script src="daymark-app-20260817-55.js?v=160">
 </script>
 <script src="translation-guard-20260819-1.js"></script>
 <script>
@@ -473,7 +473,7 @@ document.getElementById('habitName').addEventListener('keydown',function(e){if(e
 <script src="link-title-20260817-1.js"></script>
 <script src="bookshelf-20260818-1.js"></script>
 <script src="document-shelf-20260818-1.js"></script>
-<script src="english-corner-20260822-1.js?v=19"></script>
+<script src="english-corner-20260822-1.js?v=20"></script>
 <script src="literature-library-20260819-1.js"></script>
 <script src="sidebar-collapse-20260819-1.js"></script>
 </body>

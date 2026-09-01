@@ -10,6 +10,12 @@
   const sanitize = html => {
     const template = document.createElement('template');
     template.innerHTML = String(html || '');
+    template.content.querySelectorAll('font[color]').forEach(font => {
+      const span = document.createElement('span');
+      span.style.color = font.getAttribute('color') || '';
+      span.innerHTML = font.innerHTML;
+      font.replaceWith(span);
+    });
     const allowed = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'S', 'MARK', 'SPAN', 'BR', 'DIV', 'P', 'UL', 'OL', 'LI', 'BLOCKQUOTE']);
     template.content.querySelectorAll('*').forEach(node => {
       if (!allowed.has(node.tagName)) {
@@ -421,6 +427,9 @@
     const target = activeEditor || document.activeElement?.closest?.('.english-rich-input') || $('englishSentence');
     if (!target) return;
     target.focus();
+    try {
+      document.execCommand('styleWithCSS', false, true);
+    } catch {}
     document.execCommand(command, false, value || null);
     target.dispatchEvent(new Event('input', { bubbles: true }));
   }
