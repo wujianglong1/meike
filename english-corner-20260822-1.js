@@ -40,6 +40,25 @@
     box.innerHTML = sanitize(html);
     return box.textContent || '';
   };
+  function applyInlineStyle(target, styles = {}) {
+    const selection = window.getSelection?.();
+    if (!target || !selection || !selection.rangeCount || selection.isCollapsed) return false;
+    const range = selection.getRangeAt(0);
+    const parent = range.commonAncestorContainer.nodeType === Node.TEXT_NODE ? range.commonAncestorContainer.parentElement : range.commonAncestorContainer;
+    if (!parent || !target.contains(parent)) return false;
+    const span = document.createElement('span');
+    Object.entries(styles).forEach(([name, value]) => {
+      if (value) span.style[name] = value;
+    });
+    span.append(range.extractContents());
+    range.insertNode(span);
+    selection.removeAllRanges();
+    const nextRange = document.createRange();
+    nextRange.selectNodeContents(span);
+    selection.addRange(nextRange);
+    target.dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  }
   const plainTextToHtml = text => {
     const lines = String(text || '').replace(/\r\n?/g, '\n').split('\n');
     const parts = [];
@@ -426,6 +445,8 @@
   function applyFormat(command, value) {
     const target = activeEditor || document.activeElement?.closest?.('.english-rich-input') || $('englishSentence');
     if (!target) return;
+    if (command === 'foreColor' && applyInlineStyle(target, { color: value || '#d94b4b' })) return;
+    if ((command === 'backColor' || command === 'hiliteColor') && applyInlineStyle(target, { backgroundColor: value || '#fff1a8' })) return;
     target.focus();
     try {
       document.execCommand('styleWithCSS', false, true);
