@@ -12,6 +12,8 @@
 
   let editingId = null;
   let renderToken = 0;
+  let viewer = null;
+  const viewerObjectUrls = [];
   const objectUrls = new Set();
   const read = () => { try { const value = JSON.parse(localStorage.getItem(K) || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } };
   const write = items => { localStorage.setItem(K, JSON.stringify(items)); window.dispatchEvent(new Event('meike-local-data-changed')); };
@@ -44,6 +46,68 @@
   const removeFile = fileId => run('readwrite', store => store.delete(fileId)).catch(() => null);
   const clearObjectUrls = () => { objectUrls.forEach(url => URL.revokeObjectURL(url)); objectUrls.clear(); };
   const objectUrl = blob => { const url = URL.createObjectURL(blob); objectUrls.add(url); return url; };
+
+  const viewerUrl = blob => { const url = URL.createObjectURL(blob); viewerObjectUrls.push(url); return url; };
+  const viewerDocument = (title, body) => new Blob([`<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>html{background:#eef3fb;color:#34415a;font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}body{box-sizing:border-box;width:min(920px,calc(100% - 32px));min-height:calc(100vh - 32px);margin:16px auto;padding:42px 48px;background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(50,67,96,.12);line-height:1.8;overflow-wrap:anywhere}img{max-width:100%;height:auto}table{width:100%;border-collapse:collapse}td,th{border:1px solid #d7dfec;padding:7px 10px;text-align:left}pre{white-space:pre-wrap;font:inherit}.unsupported{display:grid;place-items:center;min-height:65vh;text-align:center}.unsupported div{max-width:520px}.unsupported b{display:block;margin-bottom:14px;font-size:64px;color:#8aa5d8}.unsupported h2{margin:0 0 10px}.unsupported p{color:#71809d}@media(max-width:600px){body{width:100%;min-height:100vh;margin:0;padding:24px 20px;border-radius:0}}</style></head><body>${body}</body></html>`], { type: 'text/html' });
+  function closeViewer() {
+    if (!viewer) return;
+    const frame = viewer.querySelector('iframe');
+    if (frame) frame.src = 'about:blank';
+    viewer.remove();
+    viewer = null;
+    viewerObjectUrls.splice(0).forEach(URL.revokeObjectURL);
+  }
+  function createViewer(item, blob) {
+    closeViewer();
+    viewer = document.createElement('section');
+    viewer.className = 'link-file-viewer';
+    viewer.innerHTML = `<header><button type="button" class="link-viewer-back" aria-label="关闭文件">‹</button><h2>${esc(item.name || item.fileName || '本地文件')}</h2><div><button type="button" class="link-viewer-download">下载原文件</button><button type="button" class="link-viewer-close" aria-label="关闭文件">×</button></div></header><div class="link-viewer-loading">正在准备预览…</div><iframe title="${esc(item.name || item.fileName || '文件预览')}" hidden></iframe>`;
+    const download = () => { const link = document.createElement('a'); link.href = viewerUrl(blob); link.download = item.fileName || item.name || '文件'; link.click(); };
+    viewer.querySelector('.link-viewer-download').onclick = download;
+    viewer.querySelector('.link-viewer-back').onclick = closeViewer;
+    viewer.querySelector('.link-viewer-close').onclick = closeViewer;
+    document.body.append(viewer);
+    return viewer;
+  }
+  async function openStoredFile(item, blob) {
+    if (!(blob instanceof Blob)) return;
+    const panel = createViewer(item, blob);
+    const frame = panel.querySelector('iframe');
+    const loading = panel.querySelector('.link-viewer-loading');
+    const ext = String(item.fileName || item.name || '').split('.').pop()?.toLowerCase() || '';
+    try {
+      let source;
+      if (ext === 'pdf' || blob.type === 'application/pdf') {
+        frame.removeAttribute('sandbox');
+        source = `${viewerUrl(blob)}#view=FitH`;
+      } else if (ext === 'docx') {
+        if (!window.mammoth?.convertToHtml) throw Error('Word 阅读组件未能加载');
+        const result = await window.mammoth.convertToHtml({ arrayBuffer: await blob.arrayBuffer() });
+        source = viewerUrl(viewerDocument(item.name || item.fileName, result.value || '<p>文档没有可显示的正文。</p>'));
+        frame.setAttribute('sandbox', '');
+      } else if (blob.type?.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'].includes(ext)) {
+        const imageSource = viewerUrl(blob);
+        source = viewerUrl(viewerDocument(item.name || item.fileName, `<p style="text-align:center"><img src="${imageSource}" alt="${esc(item.name || item.fileName)}"></p>`));
+        frame.setAttribute('sandbox', '');
+      } else if (['txt', 'md', 'markdown', 'csv', 'rtf'].includes(ext) || blob.type?.startsWith('text/')) {
+        source = viewerUrl(viewerDocument(item.name || item.fileName, `<pre>${esc(await blob.text())}</pre>`));
+        frame.setAttribute('sandbox', '');
+      } else if (['html', 'htm'].includes(ext)) {
+        source = viewerUrl(new Blob([await blob.text()], { type: 'text/html' }));
+        frame.setAttribute('sandbox', '');
+      } else {
+        const label = ext ? ext.toUpperCase() : 'FILE';
+        source = viewerUrl(viewerDocument(item.name || item.fileName, `<div class="unsupported"><div><b>${esc(label)}</b><h2>这种格式暂时不能在网页内预览</h2><p>老式 DOC、PPT、Excel 和压缩文件需要使用电脑或平板上的对应应用打开。这里不会自动下载；需要时请点击上方“下载原文件”。</p></div></div>`));
+        frame.setAttribute('sandbox', '');
+      }
+      if (panel !== viewer) return;
+      frame.onload = () => { loading.hidden = true; frame.hidden = false; };
+      frame.src = source;
+    } catch (error) {
+      if (panel !== viewer) return;
+      loading.innerHTML = `<strong>暂时无法预览这个文件</strong><small>${esc(error.message || '文件内容无法读取')}。原文件仍然完好，可以点击“下载原文件”。</small>`;
+    }
+  }
 
   function reset() {
     editingId = null;
@@ -90,7 +154,7 @@
         actions.className = 'link-actions';
         const fileUrl = stored?.blob ? objectUrl(stored.blob) : '';
         actions.append(
-          fileAction('打开', () => window.open(fileUrl, '_blank', 'noopener'), !fileUrl),
+          fileAction('打开', () => openStoredFile(item, stored.blob), !fileUrl),
           fileAction('下载', () => { const link = document.createElement('a'); link.href = fileUrl; link.download = item.fileName || item.name || '文件'; link.click(); }, !fileUrl),
           fileAction('重命名', () => {
             const name = prompt('文件显示名称', item.name || item.fileName || '');
@@ -187,6 +251,8 @@
   }
   document.querySelector('.nav[data-view="links"]')?.addEventListener('click', () => { document.getElementById('title').textContent = '网址与文件'; render(); });
   window.addEventListener('meike-data-synced', render);
-  window.addEventListener('beforeunload', clearObjectUrls);
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && viewer) closeViewer(); });
+  document.addEventListener('click', event => { if (viewer && event.target.closest('.nav')) closeViewer(); });
+  window.addEventListener('beforeunload', () => { closeViewer(); clearObjectUrls(); });
   render();
 })();
