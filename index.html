@@ -14,7 +14,7 @@
 <meta name="theme-color" content="#f4f1ea">
 <title>美刻｜日常计划与生活记录</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="daymark-styles-20260817-87.css?v=100">
+<link rel="stylesheet" href="daymark-styles-20260817-87.css?v=101">
 <link rel="stylesheet" href="translation-guard-20260819-1.css">
 <link rel="stylesheet" href="literature-local-read-20260819-1.css">
 <link rel="stylesheet" href="sidebar-collapse-20260819-1.css">
@@ -246,7 +246,7 @@
 </div>
 </section>
 <section id="secret" class="view"><div class="secret-head"><div><p class="intro">只留给自己的几句话。</p><h2>秘密簿</h2></div><button id="newSecret" type="button">＋ 新记录</button></div><div id="secretEditor" class="secret-editor card"><input id="secretTitle" type="text" maxlength="80" placeholder="这一页的标题"><textarea id="secretText" rows="9" placeholder="写下此刻不想说出口的事……"></textarea><div><time id="secretDate"></time><button id="saveSecret" type="button">保存</button></div></div><div id="secretList" class="secret-list"></div></section>
-<section id="links" class="view"><div class="link-head"><div><p class="intro">把常用入口收在这里。</p><h2>网址簿</h2></div></div><div class="link-editor card"><input id="linkName" type="text" maxlength="60" placeholder="网站名称，例如：学校邮箱"><input id="linkUrl" type="url" placeholder="https://example.com"><button id="saveLink" type="button">添加网址</button></div><div id="linkList" class="link-list"></div></section>
+<section id="links" class="view"><div class="link-head"><div><p class="intro">把常用网址和文件都收在这里。</p><h2>网址与文件簿</h2></div></div><div class="link-editor card"><input id="linkName" type="text" maxlength="60" placeholder="网站名称，例如：学校邮箱"><input id="linkUrl" type="url" placeholder="https://example.com"><button id="saveLink" type="button">添加网址</button></div><label id="linkFileDrop" class="link-file-drop card" tabindex="0"><input id="linkFileInput" type="file" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.rtf,.csv,.html,.htm,.zip,.rar,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"><span class="link-file-drop-icon">＋</span><span><strong>拖入 PDF、Word 等文件</strong><small>也可以点击选择；单个文件不超过 50 MB，文件保存在当前设备</small></span></label><div id="linkFileMessage" class="link-file-message" aria-live="polite"></div><div id="linkList" class="link-list"></div></section>
 <section id="bookshelf" class="view">
 <div class="bookshelf-head"><div><p class="intro">把想读的书放在手边。</p><h2>我的书架</h2></div></div>
 <article class="card wisdom-card"><div class="wisdom-head"><div><em>先贤智慧</em><h2 id="wisdomTitle">今日故事</h2></div><button id="wisdomNext" type="button">换一则</button></div><p id="wisdomStory"></p><small id="wisdomSource"></small></article>
@@ -394,7 +394,7 @@ window.saveHabitFromBox=function(){var input=document.getElementById('habitName'
 window.quickDeleteHabit=function(name,button){var key='daymark-v1',data;try{data=JSON.parse(localStorage.getItem(key)||'null')}catch(e){}if(data){data.settings=data.settings||{};var defaults=['睡眠达标','运动','阅读学习','喝水','整理环境'];data.settings.habitNames=(data.settings.habitNames||defaults).filter(function(x){return x!==name});Object.keys(data.days||{}).forEach(function(k){if(data.days[k].habits)delete data.days[k].habits[name]});localStorage.setItem(key,JSON.stringify(data))}button.closest('.habit').remove();var total=document.querySelectorAll('#habits .habit').length,done=document.querySelectorAll('#habits input:checked').length;document.getElementById('overviewHabits').textContent=done+' / '+total;document.getElementById('habitProgress').style.width=(total?done/total*100:0)+'%'};
 document.getElementById('habitName').addEventListener('keydown',function(e){if(e.key==='Enter')saveHabitFromBox();if(e.key==='Escape')closeHabitBox()});
 </script>
-<script src="daymark-app-20260817-55.js?v=161">
+<script src="daymark-app-20260817-55.js?v=162">
 </script>
 <script src="translation-guard-20260819-1.js"></script>
 <script>
@@ -457,7 +457,7 @@ document.getElementById('habitName').addEventListener('keydown',function(e){if(e
 <script src="life-journal-20260817-49.js?v=51"></script>
 <script src="module-controls-20260817-50.js"></script>
 <div id="accountDialog" class="account-dialog" aria-hidden="true"><div class="account-panel"><button id="closeAccount" class="account-close" type="button" aria-label="关闭">×</button><em>美刻账户</em><h2 id="accountTitle">登录后，在各设备继续记录</h2><p id="accountHint">使用邮箱和密码保存你的日程、生活、网址、秘密、文献和英语角。</p><form id="accountForm"><label>邮箱<input id="accountEmail" type="email" autocomplete="email" required placeholder="name@example.com"></label><label>密码<input id="accountPassword" type="password" autocomplete="current-password" required minlength="6" placeholder="至少 6 位"></label><button id="accountSubmit" type="submit">登录</button></form><button id="accountMode" class="account-mode" type="button">还没有账户？注册</button><div id="accountSigned" hidden><div class="profile-editor"><button id="avatarPicker" type="button" class="profile-avatar">美</button><input id="avatarFile" type="file" accept="image/*" hidden><div><label>昵称<input id="profileName" maxlength="18" placeholder="给自己起个名字"></label><button id="saveProfile" type="button">保存资料</button></div></div><strong id="accountUser"></strong><p>同步已开启，修改会自动保存到你的账户。</p><button id="syncNow" type="button">立即同步</button><button id="syncDiagnose" type="button">同步诊断</button><button id="accountSignOut" class="account-mode" type="button">退出登录</button><pre id="syncDiagnostic" class="sync-diagnostic" hidden></pre></div><p id="accountMessage" class="account-message" role="status"></p></div></div>
-<script src="daymark-account-20260817-9.js?v=18"></script>
+<script src="daymark-account-20260817-9.js?v=19"></script>
 <script src="goals-planning-20260817-1.js"></script>
 <script src="calendar-day-link-20260817-3.js"></script>
 <script src="time-schedule-20260817-4.js"></script>
@@ -469,7 +469,7 @@ document.getElementById('habitName').addEventListener('keydown',function(e){if(e
 <script src="secret-book-20260817-2.js"></script>
 <script src="secret-lock-20260818-2.js"></script>
 <script src="secret-title-20260817-1.js"></script>
-<script src="link-book-20260817-2.js"></script>
+<script src="link-book-20260817-2.js?v=3"></script>
 <script src="link-title-20260817-1.js"></script>
 <script src="bookshelf-20260818-1.js"></script>
 <script src="document-shelf-20260818-1.js"></script>
