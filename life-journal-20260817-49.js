@@ -13,14 +13,8 @@
   const normalizedImages=entry=>(entry.images||[]).map(image=>image?.blob?image:{blob:image,caption:''}).filter(image=>image.blob instanceof Blob);
   const normalizedFiles=entry=>(entry.attachments||[]).map(file=>file?.blob?file:{blob:file,name:'附件',type:file?.type||''}).filter(file=>file.blob instanceof Blob);
 
-  async function compressImage(file){
-    if(!file.type.startsWith('image/'))return file;
-    const bitmap=await createImageBitmap(file),maximum=1920,ratio=Math.min(1,maximum/Math.max(bitmap.width,bitmap.height));
-    if(ratio===1&&file.size<900000){bitmap.close();return file}
-    const canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*ratio);canvas.height=Math.round(bitmap.height*ratio);
-    canvas.getContext('2d',{alpha:false}).drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
-    return new Promise(resolve=>canvas.toBlob(blob=>resolve(blob||file),'image/jpeg',.84));
-  }
+  // 生活照片属于用户的原始资料：保存时保留原文件，不再缩放或转成低质量 JPEG。
+  const preserveImage=file=>file;
   const blobToDataUrl=blob=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.readAsDataURL(blob)});
   const dataUrlToBlob=async value=>(await fetch(value)).blob();
 
@@ -75,7 +69,7 @@
       card.querySelector('.life-edit').onclick=()=>{editingId=entry.id;selectedImages=images.map(image=>({...image}));selectedFiles=files.map(file=>({...file}));selectedCover=Number.isInteger(entry.coverIndex)&&entry.coverIndex<images.length?entry.coverIndex:0;$('#lifeDate').value=entry.date;$('#lifeTitle').value=entry.title||'';$('#lifeNote').value=entry.note||'';$('#lifeTags').value=tags.join('、');$('#saveLifeEntry').textContent='保存修改';composer.classList.add('open');renderPreview();composer.scrollIntoView({behavior:'smooth',block:'start'})};entriesBox.append(card)});updateStorage(complete);
   }
   $('#newLifeEntry').onclick=()=>{resetForm();composer.classList.add('open');$('#lifeTitle').focus()};$('#cancelLifeEntry').onclick=resetForm;
-  async function addFiles(files){files=[...files].filter(file=>file instanceof File);if(!files.length)return;$('#saveLifeEntry').disabled=true;$('#saveLifeEntry').textContent='正在处理文件…';try{const images=files.filter(file=>file.type.startsWith('image/')),attachments=files.filter(file=>!file.type.startsWith('image/'));selectedImages.push(...(await Promise.all(images.map(compressImage))).map(blob=>({blob,caption:''})));selectedFiles.push(...attachments.map(file=>({blob:file,name:file.name,type:file.type})));renderPreview()}finally{$('#saveLifeEntry').disabled=false;$('#saveLifeEntry').textContent=editingId?'保存修改':'保存记录'}}
+  async function addFiles(files){files=[...files].filter(file=>file instanceof File);if(!files.length)return;$('#saveLifeEntry').disabled=true;$('#saveLifeEntry').textContent='正在保存原图…';try{const images=files.filter(file=>file.type.startsWith('image/')),attachments=files.filter(file=>!file.type.startsWith('image/'));selectedImages.push(...images.map(preserveImage).map(blob=>({blob,caption:''})));selectedFiles.push(...attachments.map(file=>({blob:file,name:file.name,type:file.type})));if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});renderPreview()}finally{$('#saveLifeEntry').disabled=false;$('#saveLifeEntry').textContent=editingId?'保存修改':'保存记录'}}
   $('#lifeImages').onchange=async event=>{const input=event.target;await addFiles(input.files);input.value=''};
   const uploadZone=$('#lifeUpload');['dragenter','dragover'].forEach(type=>uploadZone.addEventListener(type,event=>{event.preventDefault();event.stopPropagation();uploadZone.classList.add('is-dragging')}));['dragleave','drop'].forEach(type=>uploadZone.addEventListener(type,event=>{event.preventDefault();event.stopPropagation();if(type==='dragleave'&&!uploadZone.contains(event.relatedTarget))uploadZone.classList.remove('is-dragging');if(type==='drop'){uploadZone.classList.remove('is-dragging');addFiles(event.dataTransfer.files)}}));
   $('#saveLifeEntry').onclick=async()=>{const title=$('#lifeTitle').value.trim(),note=$('#lifeNote').value.trim();if(!title&&!note&&!selectedImages.length&&!selectedFiles.length)return $('#lifeTitle').focus();const tags=$('#lifeTags').value.split(/[，,、]/).map(tag=>tag.trim()).filter(Boolean);await put({id:editingId||`${Date.now()}-${Math.random().toString(16).slice(2)}`,date:$('#lifeDate').value||localDate(),title,note,tags:[...new Set(tags)],images:selectedImages,attachments:selectedFiles,coverIndex:selectedImages.length?Math.min(selectedCover,selectedImages.length-1):0,updatedAt:Date.now()});notifyLifeChanged();resetForm();render()};
