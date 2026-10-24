@@ -80,7 +80,7 @@
     const reveal = () => {
       if (panel !== viewer) return;
       clearTimeout(revealTimer);
-      loading.hidden = true;
+      if (loading.isConnected) loading.hidden = true;
       frame.hidden = false;
     };
     try {
@@ -95,6 +95,8 @@
         embed.className = 'link-pdf-embed';
         frame.replaceWith(embed);
         frame = embed;
+        // PDF 内置阅读器不会稳定触发 iframe 的 load 事件；移除加载层，避免它作为 grid 子项占据一整行。
+        loading.remove();
       } else if (ext === 'docx') {
         if (!window.mammoth?.convertToHtml) throw Error('Word 阅读组件未能加载');
         loading.textContent = '正在转换 Word 文档…';
