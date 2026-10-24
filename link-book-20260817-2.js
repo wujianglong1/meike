@@ -73,7 +73,7 @@
   async function openStoredFile(item, blob) {
     if (!(blob instanceof Blob)) return;
     const panel = createViewer(item, blob);
-    const frame = panel.querySelector('iframe');
+    let frame = panel.querySelector('iframe');
     const loading = panel.querySelector('.link-viewer-loading');
     const ext = String(item.fileName || item.name || '').split('.').pop()?.toLowerCase() || '';
     let revealTimer = 0;
@@ -89,6 +89,12 @@
         frame.removeAttribute('sandbox');
         source = `${viewerUrl(blob)}#view=FitH`;
         loading.textContent = '正在打开 PDF…';
+        const embed = document.createElement('embed');
+        embed.type = 'application/pdf';
+        embed.title = item.name || item.fileName || 'PDF 预览';
+        embed.className = 'link-pdf-embed';
+        frame.replaceWith(embed);
+        frame = embed;
       } else if (ext === 'docx') {
         if (!window.mammoth?.convertToHtml) throw Error('Word 阅读组件未能加载');
         loading.textContent = '正在转换 Word 文档…';
