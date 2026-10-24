@@ -23,6 +23,7 @@
   const formatDate = value => new Date(value || Date.now()).toLocaleDateString('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric' });
   const extension = name => String(name || '').split('.').pop()?.toUpperCase().slice(0, 5) || 'FILE';
   const message = text => { if (fileMessage) fileMessage.textContent = text || ''; };
+  const withTimeout = (promise, ms, text) => Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(Error(text)), ms))]);
 
   const openDb = () => new Promise((resolve, reject) => {
     if (!window.indexedDB) return reject(Error('当前浏览器不支持本地文件库'));
@@ -75,14 +76,24 @@
     const frame = panel.querySelector('iframe');
     const loading = panel.querySelector('.link-viewer-loading');
     const ext = String(item.fileName || item.name || '').split('.').pop()?.toLowerCase() || '';
+    let revealTimer = 0;
+    const reveal = () => {
+      if (panel !== viewer) return;
+      clearTimeout(revealTimer);
+      loading.hidden = true;
+      frame.hidden = false;
+    };
     try {
       let source;
       if (ext === 'pdf' || blob.type === 'application/pdf') {
         frame.removeAttribute('sandbox');
         source = `${viewerUrl(blob)}#view=FitH`;
+        loading.textContent = '正在打开 PDF…';
       } else if (ext === 'docx') {
         if (!window.mammoth?.convertToHtml) throw Error('Word 阅读组件未能加载');
-        const result = await window.mammoth.convertToHtml({ arrayBuffer: await blob.arrayBuffer() });
+        loading.textContent = '正在转换 Word 文档…';
+        const arrayBuffer = await withTimeout(blob.arrayBuffer(), 12000, '读取 Word 文件超时');
+        const result = await withTimeout(window.mammoth.convertToHtml({ arrayBuffer }), 25000, 'Word 文档转换超时');
         source = viewerUrl(viewerDocument(item.name || item.fileName, result.value || '<p>文档没有可显示的正文。</p>'));
         frame.setAttribute('sandbox', '');
       } else if (blob.type?.startsWith('image/') || ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'].includes(ext)) {
@@ -101,10 +112,21 @@
         frame.setAttribute('sandbox', '');
       }
       if (panel !== viewer) return;
-      frame.onload = () => { loading.hidden = true; frame.hidden = false; };
+      frame.onload = reveal;
+      frame.onerror = () => {
+        if (panel !== viewer) return;
+        clearTimeout(revealTimer);
+        frame.hidden = true;
+        loading.hidden = false;
+        loading.innerHTML = '<strong>预览载入失败</strong><small>原文件仍然完好，请点击上方“下载原文件”后使用系统应用打开。</small>';
+      };
       frame.src = source;
+      // Edge 的内置 PDF 阅读器有时不会触发 iframe 的 load 事件；先显示阅读器，避免永久停留在准备界面。
+      if (ext === 'pdf' || blob.type === 'application/pdf') reveal();
+      else revealTimer = setTimeout(reveal, 3500);
     } catch (error) {
       if (panel !== viewer) return;
+      clearTimeout(revealTimer);
       loading.innerHTML = `<strong>暂时无法预览这个文件</strong><small>${esc(error.message || '文件内容无法读取')}。原文件仍然完好，可以点击“下载原文件”。</small>`;
     }
   }
@@ -256,3 +278,4 @@
   window.addEventListener('beforeunload', () => { closeViewer(); clearObjectUrls(); });
   render();
 })();
+
