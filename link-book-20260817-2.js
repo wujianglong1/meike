@@ -92,6 +92,7 @@
         const embed = document.createElement('embed');
         embed.type = 'application/pdf';
         embed.title = item.name || item.fileName || 'PDF 预览';
+        embed.src = source;
         embed.className = 'link-pdf-embed';
         frame.replaceWith(embed);
         frame = embed;
