@@ -135,6 +135,8 @@
         loading.innerHTML = '<strong>预览载入失败</strong><small>原文件仍然完好，请点击上方“下载原文件”后使用系统应用打开。</small>';
       };
       frame.src = source;
+      // 纯文本、图片、HTML 以及不支持的格式都已经生成了本地预览页，不必等待 iframe 的 load 事件。
+      if (ext !== 'docx' && !(ext === 'pdf' || blob.type === 'application/pdf')) reveal();
       // Edge 的内置 PDF 阅读器有时不会触发 iframe 的 load 事件；先显示阅读器，避免永久停留在准备界面。
       if (ext === 'pdf' || blob.type === 'application/pdf') reveal();
       else revealTimer = setTimeout(reveal, 3500);
