@@ -77,9 +77,14 @@
     const loading = panel.querySelector('.link-viewer-loading');
     const ext = String(item.fileName || item.name || '').split('.').pop()?.toLowerCase() || '';
     let revealTimer = 0;
+    const failSafe = setTimeout(() => {
+      if (panel !== viewer || !loading.isConnected) return;
+      loading.innerHTML = '<strong>预览载入时间过长</strong><small>原文件仍然保存在本机，请点击右上角“下载原文件”打开。</small>';
+    }, 8000);
     const reveal = () => {
       if (panel !== viewer) return;
       clearTimeout(revealTimer);
+      clearTimeout(failSafe);
       if (loading.isConnected) loading.hidden = true;
       frame.hidden = false;
     };
@@ -136,6 +141,7 @@
     } catch (error) {
       if (panel !== viewer) return;
       clearTimeout(revealTimer);
+      clearTimeout(failSafe);
       loading.innerHTML = `<strong>暂时无法预览这个文件</strong><small>${esc(error.message || '文件内容无法读取')}。原文件仍然完好，可以点击“下载原文件”。</small>`;
     }
   }
