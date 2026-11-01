@@ -90,18 +90,18 @@
     };
     try {
       let source;
-      if (ext === 'pdf' || blob.type === 'application/pdf') {
+      let isPdf = ext === 'pdf' || blob.type === 'application/pdf';
+      if (!isPdf) {
+        const signature = await blob.slice(0, 5).text().catch(() => '');
+        isPdf = signature === '%PDF-';
+      }
+      if (isPdf) {
         frame.removeAttribute('sandbox');
         source = `${viewerUrl(blob)}#view=FitH`;
         loading.textContent = '正在打开 PDF…';
-        const embed = document.createElement('embed');
-        embed.type = 'application/pdf';
-        embed.title = item.name || item.fileName || 'PDF 预览';
-        embed.src = source;
-        embed.className = 'link-pdf-embed';
-        frame.replaceWith(embed);
-        frame = embed;
-        // PDF 内置阅读器不会稳定触发 iframe 的 load 事件；移除加载层，避免它作为 grid 子项占据一整行。
+        // 使用浏览器原生 iframe PDF 查看器，兼容文件名缺少 .pdf 后缀的附件。
+        frame.title = item.name || item.fileName || 'PDF 预览';
+        frame.src = source;
         loading.remove();
       } else if (ext === 'docx') {
         if (!window.mammoth?.convertToHtml) throw Error('Word 阅读组件未能加载');
@@ -136,9 +136,9 @@
       };
       frame.src = source;
       // 纯文本、图片、HTML 以及不支持的格式都已经生成了本地预览页，不必等待 iframe 的 load 事件。
-      if (ext !== 'docx' && !(ext === 'pdf' || blob.type === 'application/pdf')) reveal();
+      if (ext !== 'docx' && !isPdf) reveal();
       // Edge 的内置 PDF 阅读器有时不会触发 iframe 的 load 事件；先显示阅读器，避免永久停留在准备界面。
-      if (ext === 'pdf' || blob.type === 'application/pdf') reveal();
+      if (isPdf) reveal();
       else revealTimer = setTimeout(reveal, 3500);
     } catch (error) {
       if (panel !== viewer) return;
