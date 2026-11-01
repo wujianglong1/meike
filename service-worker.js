@@ -1,6 +1,7 @@
-const CACHE='daymark-shell-20261102-175';
+const CACHE='daymark-shell-20261102-176';
 const FILES=['./','./index.html','./daymark-styles-20260817-87.css?v=106','./daymark-styles-20260817-86.css','./daymark-styles-20260817-85.css','./daymark-styles-20260817-84.css','./daymark-styles-20260817-83.css','./daymark-styles-20260817-82.css','./daymark-styles-20260817-81.css','./daymark-app-20260817-55.js?v=172','./theme-cycle-20260817-31.js','./weather-forecast-20260817-54.js','./zoom-control-20260817-45.js','./life-journal-20260817-49.js?v=54','./module-controls-20260817-50.js','./daymark-account-20260817-9.js?v=22','./goals-planning-20260817-1.js','./calendar-day-link-20260817-3.js','./time-schedule-20260817-4.js','./page-refresh-20260817-1.js','./bookshelf-20260818-1.js','./document-shelf-20260818-1.js','./english-corner-20260822-1.js?v=21','./literature-library-20260819-1.js','./secret-book-20260817-2.js','./secret-lock-20260818-2.js','./secret-title-20260817-1.js','./mammoth.browser.min.js?v=1.13.0','./link-book-20260817-2.js?v=10','./link-title-20260817-1.js','./manifest.webmanifest','./daymark-icon.svg'];
 FILES.push('./literature-local-read-20260819-1.css');
+FILES.push('./link-book-20260817-2.js?v=11');
 FILES.push('./translation-guard-20260819-1.css','./translation-guard-20260819-1.js');
 FILES.push('./sidebar-collapse-20260819-1.css','./sidebar-collapse-20260819-1.js');
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)).then(()=>self.skipWaiting())));
